@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import {
   FaUserMd,
   FaBriefcaseMedical,
@@ -14,30 +14,30 @@ import {
   MdPeopleAlt,
   MdAttachMoney,
   MdLocalPharmacy,
-  MdOutlineBed,
   MdSms,
 } from "react-icons/md";
 import { Outlet, Link } from "react-router-dom";
 import { ThemeContext } from "../colors/Thems";
-
-const menuItems = [
-  { label: "Dashboard", icon: <MdDashboard />, href: "/admin/dash" },
-  { label: "Departments", icon: <MdApartment />, href: "/admin/department" },
-  { label: "Doctor", icon: <FaUserMd />, href: "/admin/doctor" },
-  { label: "Patient", icon: <MdPerson />, href: "/admin/list" },
-  { label: "Student", icon: <FaUserGraduate />, href: "/admin/student" },
-  { label: "Appointment", icon: <MdCalendarToday />, href: "/admin/appoint" },
-  { label: "Human Resources", icon: <MdPeopleAlt />, href: "/admin/human" },
-  { label: "Financial Activities", icon: <MdAttachMoney />, href: "/admin/finance" },
-  { label: "Prescription", icon: <FaBriefcaseMedical />, href: "/prescription" },
-  { label: "Medicine", icon: <FaCapsules />, href: "/medicine" },
-  { label: "Pharmacy", icon: <MdLocalPharmacy />, href: "/pharmacy" },
-  { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
-  { label: "SMS", icon: <MdSms />, href: "/admin/sms" },
-];
+import { IoChevronDown, IoChevronUp } from "react-icons/io5"; // Chevron icons
 
 const Sidebar = () => {
   const { isDark, toggleTheme } = useContext(ThemeContext);
+  const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
+  const [showAppointmentDropdown, setShowAppointmentDropdown] = useState(false);
+
+  const menuItems = [
+    { label: "Dashboard", icon: <MdDashboard />, href: "/admin/dash" },
+    { label: "Departments", icon: <MdApartment />, href: "/admin/department" },
+    { label: "Doctor", icon: <FaUserMd />, href: "/admin/doctor" },
+    { label: "Patient", icon: <MdPerson />, href: "/admin/list" },
+    { label: "Student", icon: <FaUserGraduate />, href: "/admin/student" },
+    { label: "Human Resources", icon: <MdPeopleAlt />, href: "/admin/human" },
+    { label: "Financial Activities", icon: <MdAttachMoney />, href: "/admin/finance" },
+    { label: "Prescription", icon: <FaBriefcaseMedical />, href: "/prescription" },
+    { label: "Medicine", icon: <FaCapsules />, href: "/medicine" },
+    { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
+    { label: "SMS", icon: <MdSms />, href: "/admin/sms" },
+  ];
 
   return (
     <div className="flex h-screen font-sans">
@@ -79,7 +79,9 @@ const Sidebar = () => {
           <span className="text-blue-400">SBC</span>{" "}
           <span className="text-red-400">SOLUTION</span>
         </h1>
+
         <ul className="space-y-2">
+          {/* Static Menu Items */}
           {menuItems.map((item, idx) => (
             <li key={idx}>
               <Link
@@ -90,6 +92,72 @@ const Sidebar = () => {
               </Link>
             </li>
           ))}
+
+          {/* Appointment Dropdown */}
+          <li>
+            <button
+              onClick={() => setShowAppointmentDropdown(prev => !prev)}
+              className="w-full flex items-center justify-between p-2 hover:bg-blue-700 hover:text-white rounded transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <MdCalendarToday /> Appointment
+              </span>
+              {showAppointmentDropdown ? <IoChevronUp /> : <IoChevronDown />}
+            </button>
+            {showAppointmentDropdown && (
+              <ul className="pl-6 mt-1 space-y-1 text-sm">
+                <li>
+                  <Link
+                    to="/admin/appoint/patient"
+                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                  >
+                    Appointment for Patient
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/admin/appoint/student"
+                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                  >
+                    Appointment for Student
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
+
+          {/* Payment Dropdown */}
+          <li>
+            <button
+              onClick={() => setShowPaymentDropdown((prev) => !prev)}
+              className="w-full flex items-center justify-between p-2 hover:bg-blue-700 hover:text-white rounded transition-all"
+            >
+              <span className="flex items-center gap-2">
+                <MdLocalPharmacy /> Payment
+              </span>
+              {showPaymentDropdown ? <IoChevronUp /> : <IoChevronDown />}
+            </button>
+            {showPaymentDropdown && (
+              <ul className="pl-6 mt-1 space-y-1 text-sm">
+                <li>
+                  <Link
+                    to="/admin/payment/patient"
+                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                  >
+                    Payment for Patient
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/admin/payment/student"
+                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                  >
+                    Payment for Student
+                  </Link>
+                </li>
+              </ul>
+            )}
+          </li>
         </ul>
       </div>
 

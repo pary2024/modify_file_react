@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { PencilIcon, TrashIcon, MapPinIcon } from "@heroicons/react/24/solid";
 import {
   UserIcon,
   IdentificationIcon,
@@ -12,8 +12,9 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { ThemeContext } from "../colors/Thems";
+
 export default function PatientList() {
-   const { isDark } = useContext(ThemeContext);
+  const { isDark } = useContext(ThemeContext);
   const [patients, setPatients] = useState([]);
   const [newPatient, setNewPatient] = useState({
     name: "",
@@ -21,9 +22,9 @@ export default function PatientList() {
     gender: "Male",
     phone: "",
     disease: "",
-    career: "", 
+    career: "",
     status: "Active",
-    
+    province: "", // Added
   });
   const [editPatient, setEditPatient] = useState({
     name: "",
@@ -31,34 +32,12 @@ export default function PatientList() {
     gender: "Male",
     phone: "",
     disease: "",
-    career: "", 
+    career: "",
     status: "Active",
-   
+    province: "", // Added
   });
   const [editingId, setEditingId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-
-  const handleNewImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewPatient((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleEditImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditPatient((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleNewInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,9 +63,9 @@ export default function PatientList() {
       gender: "Male",
       phone: "",
       disease: "",
-      career: "", 
+      career: "",
       status: "Active",
-      
+      province: "",
     });
   };
 
@@ -112,6 +91,7 @@ export default function PatientList() {
 
       {/* Create Form */}
       <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
+        {/* Existing inputs ... */}
         <input
           name="name"
           value={newPatient.name}
@@ -127,13 +107,13 @@ export default function PatientList() {
           type="number"
           placeholder="Age"
           required
-           className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
+          className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
         />
         <select
           name="gender"
           value={newPatient.gender}
           onChange={handleNewInputChange}
-           className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
+          className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
         >
           <option>Male</option>
           <option>Female</option>
@@ -144,9 +124,9 @@ export default function PatientList() {
           onChange={handleNewInputChange}
           placeholder="Phone"
           required
-           className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
+          className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
         />
-         <input
+        <input
           name="career"
           value={newPatient.career}
           onChange={handleNewInputChange}
@@ -166,13 +146,21 @@ export default function PatientList() {
           name="status"
           value={newPatient.status}
           onChange={handleNewInputChange}
-           className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
+          className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
         >
           <option>Active</option>
           <option>Recovered</option>
           <option>Chronic</option>
         </select>
-     
+        {/* Province Input */}
+        <input
+          name="province"
+          value={newPatient.province}
+          onChange={handleNewInputChange}
+          placeholder="Province"
+          required
+          className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
+        />
         <button
           type="submit"
           className="col-span-2 ml-auto bg-blue-600 text-white px-6 py-2 rounded hover:bg-green-700"
@@ -182,16 +170,16 @@ export default function PatientList() {
       </form>
 
       {/* Table */}
-      <table className="w-full table-auto  mt-4">
-        <thead  className={`${isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700'} text-sm`}>
+      <table className="w-full table-auto mt-4">
+        <thead className={`${isDark ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-700'} text-sm`}>
           <tr>
+            {/* Existing table headers */}
             <th className="p-2 font-normal">
               <div className="flex items-center gap-2">
                 <IdentificationIcon className="w-4 h-4 text-gray-500 border-r border-gray-300 pr-2" />
                 ID Code
               </div>
             </th>
-           
             <th className="p-2 font-normal">
               <div className="flex items-center gap-2">
                 <UserIcon className="w-4 h-4 text-gray-500 border-r border-gray-300 pr-2" />
@@ -237,7 +225,14 @@ export default function PatientList() {
             <th className="p-2 font-normal">
               <div className="flex items-center gap-2">
                 <ClockIcon className="w-4 h-4 text-gray-500 border-r border-gray-300 pr-2" />
-                 Career
+                Career
+              </div>
+            </th>
+            {/* Province Column */}
+            <th className="p-2 font-normal">
+              <div className="flex items-center gap-2">
+                <MapPinIcon className="w-4 h-4 text-gray-500 border-r border-gray-300 pr-2" />
+                Province
               </div>
             </th>
             <th className="p-2 font-normal">
@@ -252,30 +247,26 @@ export default function PatientList() {
         <tbody>
           {patients.map((p) => (
             <tr key={p.id}>
-              <td className="p-2 ">DT{p.id}</td>
-             
-              <td className="p-2 ">{p.name}</td>
-              <td className="p-2 ">{p.age}</td>
-              <td className="p-2 ">{p.gender}</td>
-              <td className="p-2 ">{p.phone}</td>
-              <td className="p-2 ">{p.disease}</td>
-              <td className="p-2 ">
-                <span
-                  className={`px-2 py-1 rounded-full text-white text-sm font-medium
-                    ${
-                      p.status === "Active"
-                        ? "bg-green-500"
-                        : p.status === "Recovered"
-                        ? "bg-blue-500"
-                        : "bg-red-500"
-                    }`}
-                >
+              <td className="p-2">DT{p.id}</td>
+              <td className="p-2">{p.name}</td>
+              <td className="p-2">{p.age}</td>
+              <td className="p-2">{p.gender}</td>
+              <td className="p-2">{p.phone}</td>
+              <td className="p-2">{p.disease}</td>
+              <td className="p-2">
+                <span className={`px-2 py-1 rounded-full text-white text-sm font-medium
+                  ${p.status === "Active"
+                    ? "bg-green-500"
+                    : p.status === "Recovered"
+                    ? "bg-blue-500"
+                    : "bg-red-500"}`}>
                   {p.status}
                 </span>
               </td>
-              <td className="p-2 ">{p.registered}</td>
-               <td className="p-2">{p.career}</td>
-              <td className="p-2  space-x-2">
+              <td className="p-2">{p.registered}</td>
+              <td className="p-2">{p.career}</td>
+              <td className="p-2">{p.province}</td>
+              <td className="p-2 space-x-2">
                 <button
                   onClick={() => {
                     setEditPatient(p);
@@ -299,12 +290,13 @@ export default function PatientList() {
       </table>
 
       {/* Edit Modal */}
-        {showEditModal && (
+      {showEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className={`p-6 rounded shadow-md w-[500px] ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
             <h2 className="text-xl font-bold mb-4">Edit Patient</h2>
             <form onSubmit={handleUpdate} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
+                {/* Existing Edit Fields */}
                 <input
                   name="name"
                   value={editPatient.name}
@@ -339,7 +331,6 @@ export default function PatientList() {
                   required
                   className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
                 />
-                
                 <input
                   name="disease"
                   value={editPatient.disease}
@@ -348,7 +339,7 @@ export default function PatientList() {
                   required
                   className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
                 />
-                  <input
+                <input
                   name="career"
                   value={editPatient.career}
                   onChange={handleEditInputChange}
@@ -366,7 +357,15 @@ export default function PatientList() {
                   <option>Recovered</option>
                   <option>Chronic</option>
                 </select>
-            
+                {/* Province Input in Edit Modal */}
+                <input
+                  name="province"
+                  value={editPatient.province}
+                  onChange={handleEditInputChange}
+                  placeholder="Province"
+                  required
+                  className={`border p-2 rounded ${isDark ? 'bg-gray-700 text-white border-gray-600' : 'bg-white text-black'}`}
+                />
               </div>
               <div className="flex justify-end space-x-2">
                 <button

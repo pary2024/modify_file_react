@@ -11,6 +11,9 @@ import Doctor from "./pages/Doctor";
 import Department from "./pages/Department";
 import Login from "./Auth/Login";
 import Student from "./pages/Student";
+import Payment from "./pages/Payment";
+import PaymentStudent from "./pages/PaymentStudent";
+import AppointmentStudent from "./pages/AppointmentStudent";
 
 function App() {
   return (
@@ -24,7 +27,7 @@ function App() {
           <Route index element={<Dash />} />
           <Route path="dash" element={<Dash />} />
           <Route path="list" element={<PatientList />} />
-          <Route path="appoint" element={<Appointment />} />
+          <Route path="appoint/patient" element={<Appointment />} />
           <Route path="report" element={<Report />} />
           <Route path="sms" element={<Sms />} />
           <Route path="finance" element={<Finance />} />
@@ -32,6 +35,9 @@ function App() {
           <Route path="doctor" element={<Doctor/>} />
           <Route path="department" element={<Department />} />
           <Route path="student" element={<Student/>}/>
+          <Route path="payment/patient" element={<Payment/>}/>
+          <Route path="payment/student" element={<PaymentStudent/>}/>
+          <Route path="appoint/student" element={<AppointmentStudent/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

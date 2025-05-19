@@ -33,7 +33,7 @@ const HumanResources = () => {
             <tr>
               <th className="p-3">#</th>
               <th className="p-3">Name</th>
-              <th className="p-3">Role</th>
+              <th className="p-3">position</th>
               <th className="p-3">Department</th>
               <th className="p-3">Contact</th>
               <th className="p-3">Status</th>

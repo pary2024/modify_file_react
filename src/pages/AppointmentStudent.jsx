@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { ThemeContext } from '../colors/Thems';
 
-const Appointment = () => {
+const AppointmentStudent = () => {
   const { isDark } = useContext(ThemeContext);
   const [appointments, setAppointments] = useState([
     {
@@ -273,7 +273,7 @@ const html = `
     <div className={`p-6 min-h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
       {/* Heading with font size controls */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Appointments for Patient</h2>
+        <h2 className="text-2xl font-bold">Appointments for Student</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setFontSize((prev) => Math.max(12, prev - 2))}
@@ -352,7 +352,7 @@ const html = `
           <thead>
             <tr className={`${isDark ? 'bg-gray-700' : 'bg-gray-200'} text-left`}>
               <th className="p-3">#</th>
-              <th className="p-3">Patient</th>
+              <th className="p-3">Student</th>
               <th className="p-3">Doctor</th>
               <th className="p-3">Date</th>
               <th className="p-3">Time In</th>
@@ -388,4 +388,4 @@ const html = `
   );
 };
 
-export default Appointment;
+export default AppointmentStudent;
