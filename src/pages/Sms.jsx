@@ -1,86 +1,251 @@
-import React, { useContext, useState } from 'react';
-import { ThemeContext } from '../colors/Thems';
+import React, { useContext, useState, useEffect } from "react";
+import { ThemeContext } from "../colors/Thems";
+import {
+  Send,
+  MessageSquare,
+  User,
+  Smartphone,
+  X,
+  Loader2,
+  Info,
+} from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { createSms, fetchSmsList } from "../stores/smsSlice";
+import { fetchPatients } from "../stores/patientSlice";
 
 const Sms = () => {
   const { isDark } = useContext(ThemeContext);
-  const [patients] = useState([
-    { id: 1, name: 'John Doe', phone: '1234567890' },
-    { id: 2, name: 'Jane Roe', phone: '0987654321' },
-  ]);
+  const { patients } = useSelector((state) => state.patient);
+  const { messages } = useSelector((state) => state.sms);
+  const dispatch = useDispatch();
 
-  const [selectedPatient, setSelectedPatient] = useState('');
-  const [template, setTemplate] = useState('');
-  const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sendStatus, setSendStatus] = useState(null);
+  const [showTips, setShowTips] = useState(true);
+  const [manualPhone, setManualPhone] = useState("");
+  const [patientSend , setPatientSend] = useState("");
+  const [phoneSend , setPhoneSend] = useState("");
+  const [noteSend , setNoteSend] = useState("");
 
-  const templates = {
-    reminder: 'Hello {patientName}, this is a reminder for your appointment on {date} at {time}.',
-    followup: 'Dear {patientName}, we hope your visit went well. Please reach out if you need any assistance.',
-    custom: '',
+  const maxSmsLength = 160;
+
+  useEffect(() => {
+    dispatch(fetchSmsList());
+    dispatch(fetchPatients());
+  }, [dispatch]);
+  console.log(messages);
+
+  const phoneNumbers = patients.map((p) => p.phone);
+
+
+
+ const handleSend = async(e)=>{
+  e.preventDefault();
+
+  const data ={
+    patient_id: patientSend,
+    phone: phoneSend,
+    note: noteSend
+
+  }
+  try{
+    setIsSending(true);
+    await dispatch(createSms(data));
+    setIsSending(false);
+
+
+  }catch(e){
+    console.log(e);
+  }
+ }
+
+  const handleManualPhoneChange = (e) => {
+    const value = e.target.value;
+    setManualPhone(value);
+    setFormData((prev) => ({ ...prev, phone: value }));
   };
 
-  const handleTemplateChange = (e) => {
-    const temp = e.target.value;
-    setTemplate(temp);
-    const selected = templates[temp] || '';
-    setMessage(selected);
-  };
-
-  const handleSend = () => {
-    if (!selectedPatient || !message) return alert('Fill all fields');
-    const patient = patients.find((p) => p.id === parseInt(selectedPatient));
-    const finalMessage = message
-      .replace('{patientName}', patient.name)
-      .replace('{date}', '2025-05-20')
-      .replace('{time}', '10:00 AM');
-
-    alert(`Sending to ${patient.phone}: ${finalMessage}`);
-    // Integrate real SMS API here
-  };
+  // const getCharacterCountColor = () => {
+  //   const count = formData.content.length;
+  //   if (count > maxSmsLength * 2) return "text-red-500";
+  //   if (count > maxSmsLength) return "text-yellow-500";
+  //   return isDark ? "text-gray-400" : "text-gray-600";
+  // };
 
   return (
-    <div className={`p-6 min-h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
-      <h2 className="text-2xl font-bold mb-4">Send SMS</h2>
+    <div
+      className={`min-h-screen p-4 sm:p-6 lg:p-8 transition-colors duration-300 ${
+        isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
+      }`}
+    >
+      <div className="mx-auto">
+        <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
+          <MessageSquare size={24} /> Send SMS
+        </h1>
 
-      {/* Form */}
-      <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} shadow rounded p-4 grid grid-cols-1 md:grid-cols-2 gap-4`}>
-        <select
-          value={selectedPatient}
-          onChange={(e) => setSelectedPatient(e.target.value)}
-          className={`border p-2 rounded ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-        >
-          <option value="">Select Patient</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        {sendStatus && (
+          <div
+            className={`mb-4 p-3 rounded-lg flex items-center ${
+              sendStatus.type === "success"
+                ? "bg-green-100 text-green-800"
+                : "bg-red-100 text-red-800"
+            } ${
+              isDark
+                ? sendStatus.type === "success"
+                  ? "bg-green-900 text-green-100"
+                  : "bg-red-900 text-red-100"
+                : ""
+            }`}
+          >
+            {sendStatus.icon}
+            <span>{sendStatus.message}</span>
+            <button
+              onClick={() => setSendStatus(null)}
+              className="ml-auto p-1 rounded-full hover:bg-opacity-20 hover:bg-black"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
 
-        <select
-          value={template}
-          onChange={handleTemplateChange}
-          className={`border p-2 rounded ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-        >
-          <option value="">Select Template</option>
-          <option value="reminder">Appointment Reminder</option>
-          <option value="followup">Follow-up</option>
-          <option value="custom">Custom</option>
-        </select>
+        <form onSubmit={ handleSend}>
+          <div className="grid gap-4 mb-6">
+            {/* Patient Selection */}
+            <div className="grid gap-2">
+              <label className="flex items-center gap-2">
+                <User size={18} /> Patient
+              </label>
+              <select
+                name="patient_id"
+                value={patientSend}
+                onChange={(e)=> setPatientSend(e.target.value)}
+                className={`w-full p-3 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700 focus:border-blue-500"
+                    : "bg-white border-gray-300 focus:border-blue-500"
+                } focus:ring-2 focus:ring-blue-500 transition-colors duration-200`}
+              >
+                <option value="">-- Select Patient --</option>
+                {patients.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{" "}
+                    {p.phones?.find((ph) => ph.isPrimary)?.number
+                      ? `(${p.phones.find((ph) => ph.isPrimary).number})`
+                      : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <textarea
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          rows="4"
-          className={`col-span-full border p-2 rounded ${isDark ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-          placeholder="Type your message here..."
-        ></textarea>
+            {/* Phone Number Section */}
+            <div className="grid gap-2">
+              <label className="flex items-center gap-2">
+                <Smartphone size={18} /> Phone Number
+              </label>
 
-        <button
-          onClick={handleSend}
-          className="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 w-[100px]"
-        >
-          Send SMS
-        </button>
+              <select
+              name="phone"
+              value={phoneSend}
+              onChange={(e)=> setPhoneSend(e.target.value)}
+                className={`w-full p-3 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700 text-white"
+                    : "bg-white border-gray-300 text-black"
+                } focus:ring-2 focus:ring-blue-500 transition-colors duration-200`}
+              >
+                <option value="">Select a phone number</option>
+                {phoneNumbers.map((number, index) => (
+                  <option key={index} value={number}>
+                    {number}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Message Content */}
+            <div className="grid gap-2">
+              <label className="flex items-center gap-2">
+                <MessageSquare size={18} /> Message
+              </label>
+              <textarea
+                name="note"
+                rows="6"
+                value={noteSend}
+                onChange={(e)=> setNoteSend(e.target.value)}
+                required
+                className={`w-full p-3 rounded-lg border ${
+                  isDark
+                    ? "bg-gray-800 border-gray-700 focus:border-blue-500"
+                    : "bg-white border-gray-300 focus:border-blue-500"
+                } focus:ring-2 focus:ring-blue-500 transition-colors duration-200`}
+                placeholder="Type your message here..."
+              ></textarea>
+              {/* <div className={`text-sm ${getCharacterCountColor()}`}>
+                {formData.content.length} characters (
+                {Math.ceil(formData.content.length / maxSmsLength)} SMS)
+              </div> */}
+            </div>
+
+            {/* Note Field */}
+           
+          </div>
+
+          {/* Send Button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSending}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
+                isSending
+                  ? isDark
+                    ? "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    : "bg-gray-200 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="animate-spin mr-2" size={18} />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send size={18} /> Send SMS
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+
+        {/* Tips Section */}
+        {showTips && (
+          <div
+            className={`mt-8 p-4 rounded-lg ${
+              isDark ? "bg-gray-800" : "bg-blue-50"
+            }`}
+          >
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="font-medium flex items-center gap-2">
+                <Info size={18} /> SMS Tips
+              </h3>
+              <button
+                onClick={() => setShowTips(false)}
+                className="p-1 rounded-full hover:bg-opacity-20 hover:bg-black"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <ul className="text-sm list-disc pl-5 space-y-1">
+              <li>Standard SMS messages are limited to 160 characters</li>
+              <li>
+                Messages longer than 160 characters will be split and charged
+                accordingly
+              </li>
+              <li>Double-check phone numbers before sending</li>
+              <li>Avoid sending sensitive information via SMS</li>
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

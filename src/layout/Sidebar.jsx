@@ -1,3 +1,4 @@
+// src/layout/Sidebar.jsx
 import React, { useContext, useState } from "react";
 import {
   FaUserMd,
@@ -15,80 +16,116 @@ import {
   MdAttachMoney,
   MdLocalPharmacy,
   MdSms,
+  MdSettings,
+  MdLogout,
+   MdSchool, MdMap, MdHealing
 } from "react-icons/md";
-import { Outlet, Link } from "react-router-dom";
-import { ThemeContext } from "../colors/Thems";
-import { IoChevronDown, IoChevronUp } from "react-icons/io5"; // Chevron icons
+import { Outlet, Link, useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../stores/authSlice";
+import { ThemeContext } from "../colors/Thems"; // Adjust path as needed
+import {
+  IoChevronDown,
+  IoChevronUp,
+  IoNotificationsOutline,
+} from "react-icons/io5";
+import { RiMedicineBottleLine } from "react-icons/ri";
 
 const Sidebar = () => {
   const { isDark, toggleTheme } = useContext(ThemeContext);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
   const [showAppointmentDropdown, setShowAppointmentDropdown] = useState(false);
+  const location = useLocation();
+  const dispatch = useDispatch();
+  const userRole = localStorage.getItem("role") || "user"; // Fallback to "user" if role is not set
 
   const menuItems = [
-    { label: "Dashboard", icon: <MdDashboard />, href: "/admin/dash" },
+    { label: "Dashboard", icon: <MdDashboard />, href: "/admin" },
     { label: "Departments", icon: <MdApartment />, href: "/admin/department" },
-    { label: "Doctor", icon: <FaUserMd />, href: "/admin/doctor" },
     { label: "Patient", icon: <MdPerson />, href: "/admin/list" },
     { label: "Student", icon: <FaUserGraduate />, href: "/admin/student" },
     { label: "Human Resources", icon: <MdPeopleAlt />, href: "/admin/human" },
-    { label: "Financial Activities", icon: <MdAttachMoney />, href: "/admin/finance" },
-    { label: "Prescription", icon: <FaBriefcaseMedical />, href: "/prescription" },
-    { label: "Medicine", icon: <FaCapsules />, href: "/medicine" },
+    {
+      label: "Financial Activities",
+      icon: <MdAttachMoney />,
+      href: "/admin/finance",
+    },
+    {
+      label: "Prescription",
+      icon: <FaBriefcaseMedical />,
+      href: "/prescription",
+    },
     { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
     { label: "SMS", icon: <MdSms />, href: "/admin/sms" },
+    { label: "Method", icon: <MdSms />, href: "/admin/method" },
+
+    // Admin-only routes
+    ...(userRole === "admin"
+      ? [
+          {
+            label: "User",
+            icon: <RiMedicineBottleLine />,
+            href: "/admin/user",
+          },
+          { label: "Doctor", icon: <FaUserMd />, href: "/admin/doctor" },
+           { label: "School", icon: <MdSchool />, href: "/admin/school" },
+            { label: "Province", icon: <MdMap />, href: "/admin/province" },
+            { label: "Treatment", icon: <MdHealing />, href: "/admin/treat" },
+        ]
+      : []),
   ];
 
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser()).unwrap(); // Call logout API and clear Redux state
+      window.location.href = "/login"; // Redirect to login
+    } catch (error) {
+      console.error("Logout failed:", error);
+      // Clear localStorage even if API call fails
+      localStorage.removeItem("token");
+      localStorage.removeItem("role");
+      window.location.href = "/login";
+    }
+  };
+
   return (
-    <div className="flex h-screen font-sans">
-      {/* Top Navbar */}
-      <div className="fixed top-0 left-64 right-0 h-16 shadow flex justify-between items-center px-6 z-10 bg-white dark:bg-gray-800">
-        <button
-          onClick={toggleTheme}
-          className="bg-gray-200 dark:bg-gray-700 px-4 py-1 rounded text-sm text-black dark:text-white"
-        >
-          {isDark ? "☀️ Light Mode" : "🌙 Dark Mode"}
-        </button>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-sm font-semibold text-gray-700 dark:text-white">
-              John Doe
-            </div>
-            <div className="text-xs text-gray-500 dark:text-gray-300">
-              Administrator
-            </div>
-          </div>
-          <img
-            src="https://randomuser.me/api/portraits/men/32.jpg"
-            alt="Profile"
-            className="w-10 h-10 rounded-full border-2 border-blue-500 shadow"
-          />
-        </div>
-      </div>
-
+    <div className={`flex h-screen font-sans ${isDark ? "dark" : ""}`}>
       {/* Sidebar */}
-      <div className="w-64 bg-white dark:bg-gray-800 text-black dark:text-white p-4 overflow-y-auto">
-        <div className="flex justify-center mb-4">
-          <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWWbQToNUShJSUfC14XOM3QXCJf4BalOfIRQ&s"
-            alt="Dentist Logo"
-            className="w-20 h-20 object-contain rounded-full"
-          />
+      <div className="w-64 bg-gradient-to-b from-blue-800 to-blue-900 text-white p-4 overflow-y-auto flex flex-col shadow-xl">
+        {/* Logo Section */}
+        <div className="flex flex-col items-center mb-8 pt-4">
+          <div className="bg-white p-2 rounded-full shadow-lg mb-3">
+            <img
+              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWWbQToNUShJSUfC14XOM3QXCJf4BalOfIRQ&s"
+              alt="Dentist Logo"
+              className="w-16 h-16 object-contain"
+            />
+          </div>
+          <h1 className="text-2xl font-bold text-center">
+            <span className="text-blue-300">SBC</span>{" "}
+            <span className="text-white">SOLUTION</span>
+          </h1>
+          <p className="text-xs text-blue-200 mt-1">Healthcare Management</p>
         </div>
-        <h1 className="text-2xl font-bold mb-8 text-left">
-          <span className="text-blue-400">SBC</span>{" "}
-          <span className="text-red-400">SOLUTION</span>
-        </h1>
 
-        <ul className="space-y-2">
-          {/* Static Menu Items */}
+        {/* Menu Items */}
+        <ul className="space-y-1 flex-1">
           {menuItems.map((item, idx) => (
             <li key={idx}>
               <Link
                 to={item.href}
-                className="flex items-center gap-2 p-2 hover:bg-blue-700 hover:text-white rounded transition-all"
+                className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                  isActive(item.href)
+                    ? "bg-blue-600 shadow-md"
+                    : "hover:bg-blue-700 hover:shadow-md"
+                }`}
               >
-                {item.icon} {item.label}
+                <span className="text-lg">{item.icon}</span>
+                <span>{item.label}</span>
               </Link>
             </li>
           ))}
@@ -96,30 +133,43 @@ const Sidebar = () => {
           {/* Appointment Dropdown */}
           <li>
             <button
-              onClick={() => setShowAppointmentDropdown(prev => !prev)}
-              className="w-full flex items-center justify-between p-2 hover:bg-blue-700 hover:text-white rounded transition-all"
+              onClick={() => setShowAppointmentDropdown((prev) => !prev)}
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
+                location.pathname.includes("/admin/appoint")
+                  ? "bg-blue-600 shadow-md"
+                  : "hover:bg-blue-700 hover:shadow-md"
+              }`}
             >
-              <span className="flex items-center gap-2">
-                <MdCalendarToday /> Appointment
+              <span className="flex items-center gap-3">
+                <MdCalendarToday className="text-lg" />
+                <span>Appointment</span>
               </span>
               {showAppointmentDropdown ? <IoChevronUp /> : <IoChevronDown />}
             </button>
             {showAppointmentDropdown && (
-              <ul className="pl-6 mt-1 space-y-1 text-sm">
+              <ul className="pl-8 mt-1 space-y-1">
                 <li>
                   <Link
                     to="/admin/appoint/patient"
-                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                    className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
+                      isActive("/admin/appoint/patient")
+                        ? "bg-blue-500 shadow"
+                        : "hover:bg-blue-600 hover:shadow"
+                    }`}
                   >
-                    Appointment for Patient
+                    <span className="text-sm">Patient Appointments</span>
                   </Link>
                 </li>
                 <li>
                   <Link
                     to="/admin/appoint/student"
-                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                    className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
+                      isActive("/admin/appoint/student")
+                        ? "bg-blue-500 shadow"
+                        : "hover:bg-blue-600 hover:shadow"
+                    }`}
                   >
-                    Appointment for Student
+                    <span className="text-sm">Student Appointments</span>
                   </Link>
                 </li>
               </ul>
@@ -130,40 +180,130 @@ const Sidebar = () => {
           <li>
             <button
               onClick={() => setShowPaymentDropdown((prev) => !prev)}
-              className="w-full flex items-center justify-between p-2 hover:bg-blue-700 hover:text-white rounded transition-all"
+              className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
+                location.pathname.includes("/admin/payment")
+                  ? "bg-blue-600 shadow-md"
+                  : "hover:bg-blue-700 hover:shadow-md"
+              }`}
             >
-              <span className="flex items-center gap-2">
-                <MdLocalPharmacy /> Payment
+              <span className="flex items-center gap-3">
+                <MdLocalPharmacy className="text-lg" />
+                <span>Payment</span>
               </span>
               {showPaymentDropdown ? <IoChevronUp /> : <IoChevronDown />}
             </button>
             {showPaymentDropdown && (
-              <ul className="pl-6 mt-1 space-y-1 text-sm">
+              <ul className="pl-8 mt-1 space-y-1">
                 <li>
                   <Link
                     to="/admin/payment/patient"
-                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                    className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
+                      isActive("/admin/payment/patient")
+                        ? "bg-blue-500 shadow"
+                        : "hover:bg-blue-600 hover:shadow"
+                    }`}
                   >
-                    Payment for Patient
+                    <span className="text-sm">Patient Payments</span>
                   </Link>
                 </li>
                 <li>
                   <Link
                     to="/admin/payment/student"
-                    className="block p-2 hover:bg-blue-600 hover:text-white rounded"
+                    className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
+                      isActive("/admin/payment/student")
+                        ? "bg-blue-500 shadow"
+                        : "hover:bg-blue-600 hover:shadow"
+                    }`}
                   >
-                    Payment for Student
+                    <span className="text-sm">Student Payments</span>
                   </Link>
                 </li>
               </ul>
             )}
           </li>
         </ul>
+
+        {/* Bottom Settings/Profile */}
+        <div className="mt-auto pt-4 border-t border-blue-700">
+          <Link
+            to="/admin/settings"
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-700 transition-all"
+          >
+            <MdSettings className="text-lg" />
+            <span>Settings</span>
+          </Link>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-700 transition-all w-full"
+          >
+            <MdLogout className="text-lg" />
+            <span>Logout</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 bg-gray-100 dark:bg-gray-900 text-black dark:text-white pt-20 px-6 overflow-auto">
-        <Outlet />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Navbar */}
+        <div className="bg-white dark:bg-gray-800 h-16 shadow-sm flex justify-between items-center px-6 z-10">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all"
+            >
+              {isDark ? "☀️" : "🌙"}
+            </button>
+            <div className="relative">
+              <button className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">
+                <IoNotificationsOutline className="text-xl" />
+              </button>
+              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="text-right hidden md:block">
+              <div className="text-sm font-semibold text-gray-700 dark:text-white">
+                John Doe
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-300">
+                {userRole === "admin" ? "Administrator" : "User"}
+              </div>
+            </div>
+            <div className="relative group">
+              <img
+                src="https://randomuser.me/api/portraits/men/32.jpg"
+                alt="Profile"
+                className="w-10 h-10 rounded-full border-2 border-blue-500 shadow cursor-pointer"
+              />
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-20 hidden group-hover:block">
+                <Link
+                  to="/admin/profile"
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Your Profile
+                </Link>
+                <Link
+                  to="/admin/settings"
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Settings
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
+                >
+                  Sign out
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-auto p-6">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

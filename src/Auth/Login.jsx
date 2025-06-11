@@ -1,22 +1,31 @@
-import React, { useState } from "react";
+// Auth/Login.jsx
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { loginUser } from '../stores/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { status, error: authError } = useSelector((state) => state.auth);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setError(''); // Clear previous errors
 
-    // Example hardcoded credentials
-    const validEmail = "admin@example.com";
-    const validPassword = "123456";
-
-    if (email === validEmail && password === validPassword) {
-      setError("");
-      alert("Login successful!");
-    } else {
-      setError("Invalid email or password");
+    try {
+      const result = await dispatch(loginUser({ email, password }));
+      if (loginUser.fulfilled.match(result)) {
+        navigate('/admin');
+      } else {
+        setError(authError || 'Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+      console.error('Unexpected login error:', err);
     }
   };
 
@@ -26,7 +35,6 @@ const Login = () => {
         onSubmit={handleLogin}
         className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md transition-all"
       >
-        {/* Dentist Logo */}
         <div className="flex justify-center mb-4">
           <img
             src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWWbQToNUShJSUfC14XOM3QXCJf4BalOfIRQ&s"
@@ -49,7 +57,8 @@ const Login = () => {
         <div className="mb-4">
           <label className="block text-gray-700 font-medium">Email</label>
           <input
-            type="email"
+            type="text"
+            name='email'
             className="w-full px-4 py-2 border rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Enter your email"
             value={email}
@@ -62,6 +71,7 @@ const Login = () => {
           <label className="block text-gray-700 font-medium">Password</label>
           <input
             type="password"
+            name='password'
             className="w-full px-4 py-2 border rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder="Enter your password"
             value={password}
@@ -73,12 +83,13 @@ const Login = () => {
         <button
           type="submit"
           className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-300"
+          disabled={status === 'loading'}
         >
-          Login
+          {status === 'loading' ? 'Logging in...' : 'Login'}
         </button>
 
         <div className="mt-4 text-sm text-center text-gray-500">
-          Don't have an account?{" "}
+          Don't have an account?{' '}
           <a href="#" className="text-blue-600 hover:underline">
             Register
           </a>
