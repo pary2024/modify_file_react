@@ -12,43 +12,71 @@ import {
   FiMail,
   FiDownload,
   FiChevronLeft,
-  FiChevronRight, 
+  FiChevronRight,
   FiTrash2,
   FiFile,
   FiCheckCircle,
   FiXCircle,
+  FiLoader,
 } from "react-icons/fi";
-import { format } from 'date-fns';
+import { format } from "date-fns";
 import { ThemeContext } from "../colors/Thems";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPatients } from "../stores/patientSlice";
 import { fetchTreats } from "../stores/treatSlice";
-import { createInvoicePatient, fetchInvoicePatients } from "../stores/invoicePatientSlice";
+import {
+  createInvoicePatient,
+  fetchInvoicePatients,
+  deleteInvoicePatient,
+} from "../stores/invoicePatientSlice";
 import { fetchPays } from "../stores/paySlice";
+import { ToastContainer,  toast } from 'react-toastify';
+import { Doughnut, Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Title,
+} from "chart.js";
+import dayjs from "dayjs";
+import { fetchDoctors } from "../stores/doctorSlice";
 
-const InvoiceLetter = ({ payment, onClose }) => {
-  const { isDark } = useContext(ThemeContext);
+// Register Chart.js components
+ChartJS.register(
+  ArcElement,
+  LineElement,
+  PointElement,
+  LinearScale,
+  CategoryScale,
+  Tooltip,
+  Legend,
+  Title
+);
+
+const Invoice = ({ payment, onClose }) => {
   const printRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
+  const dispatch = useDispatch();
+   const { patients } = useSelector((state) => state.patient);
+   const { invoicePatients } = useSelector((state) => state.invoicePatient);
+   useEffect(()=>{
+    dispatch(fetchPatients());
+    dispatch(fetchInvoicePatients());
+   },[dispatch]);
 
-  if (!payment) return null;
 
-  const currentDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  
 
   const handlePrint = () => {
+    const imageCompany = localStorage.getItem("companyImage");
+    const companyName = localStorage.getItem("company");
     setIsPrinting(true);
-    if (!payment || !payment.id || !payment.patient || !payment.treat) {
-      console.error("Invalid payment data:", payment);
-      alert("Cannot print invoice: Invalid payment data.");
-      setIsPrinting(false);
-      return;
-    }
-
-    const printWindow = window.open("", "_blank");
+    const printWindow = window.open('', '_blank');
     if (!printWindow) {
       alert("Print window blocked. Please allow popups for this site and try again.");
       setIsPrinting(false);
@@ -58,256 +86,110 @@ const InvoiceLetter = ({ payment, onClose }) => {
     printWindow.document.write(`
       <!DOCTYPE html>
       <html lang="en">
-        <head>
-          <title>Dental Invoice #${payment.id.toString().padStart(5, "0")}</title>
-          <meta charset="UTF-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <style>
-            @page {
-              size: A4;
-              margin: 20mm 15mm;
-            }
-            * {
-              box-sizing: border-box;
-              margin: 0;
-              padding: 0;
-            }
-            body {
-              font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
-              line-height: 1.6;
-              color: #1f2937;
-              background-color: white;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
-            }
-            .invoice-container {
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 2.5rem;
-              background-color: white;
-            }
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 2.5rem;
-              padding-bottom: 1.5rem;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            .clinic-info h1 {
-              color: #075985;
-              font-size: 1.8rem;
-              font-weight: 700;
-              margin-bottom: 0.75rem;
-              letter-spacing: -0.5px;
-            }
-            .clinic-info p {
-              color: #4b5563;
-              font-size: 0.875rem;
-              margin: 0.25rem 0;
-              line-height: 1.5;
-            }
-            .invoice-info h2 {
-              color: #075985;
-              font-size: 1.5rem;
-              font-weight: 600;
-              margin-bottom: 0.75rem;
-              text-align: right;
-            }
-            .invoice-info p {
-              color: #4b5563;
-              font-size: 0.875rem;
-              margin: 0.25rem 0;
-              text-align: right;
-              line-height: 1.5;
-            }
-            .patient-section {
-              background-color: #f0f9ff;
-              padding: 1.75rem;
-              border-radius: 0.5rem;
-              margin-bottom: 2rem;
-              border: 1px solid #e0f2fe;
-            }
-            .section-title {
-              font-size: 1.125rem;
-              font-weight: 600;
-              color: #075985;
-              margin-bottom: 1.25rem;
-              display: flex;
-              align-items: center;
-            }
-            .section-title:after {
-              content: "";
-              flex: 1;
-              margin-left: 1rem;
-              height: 1px;
-              background-color: #e0f2fe;
-            }
-            .patient-info-grid {
-              display: grid;
-              grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-              gap: 1.25rem;
-            }
-            .patient-info p {
-              font-size: 0.95rem;
-              margin: 0.5rem 0;
-              display: flex;
-            }
-            .patient-info strong {
-              color: #075985;
-              font-weight: 600;
-              min-width: 120px;
-              display: inline-block;
-            }
-            .status {
-              display: inline-flex;
-              align-items: center;
-              padding: 0.25rem 0.75rem;
-              border-radius: 9999px;
-              font-size: 0.85rem;
-              font-weight: 600;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            .status.paid {
-              background-color: #dcfce7;
-              color: #166534;
-            }
-            .status.unpaid {
-              background-color: #fee2e2;
-              color: #991b1b;
-            }
-            .treatment-section {
-              margin: 2.5rem 0;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 1.75rem 0;
-              font-size: 0.95rem;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            }
-            th {
-              background-color: #075985;
-              color: white;
-              text-align: left;
-              padding: 0.875rem 1.25rem;
-              font-weight: 600;
-              border: none;
-            }
-            td {
-              padding: 0.875rem 1.25rem;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            tr:nth-child(even) {
-              background-color: #f8fafc;
-            }
-            .text-right {
-              text-align: right;
-            }
-            .total-row {
-              font-weight: 600;
-              background-color: #f0f9ff !important;
-            }
-            .balance-row {
-              font-weight: 700;
-              background-color: #e0f2fe !important;
-              font-size: 1.05rem;
-            }
-            .payment-method {
-              display: flex;
-              justify-content: space-between;
-              padding: 1.25rem;
-              background-color: #f8fafc;
-              border-radius: 0.5rem;
-              margin: 2rem 0;
-              font-size: 0.95rem;
-              border: 1px solid #e5e7eb;
-            }
-            .payment-method span:last-child {
-              font-weight: 600;
-              color: #075985;
-            }
-            .qr-section {
-              background-color: #f0f9ff;
-              padding: 1.75rem;
-              border-radius: 0.5rem;
-              margin: 2rem 0;
-              text-align: center;
-              border: 1px dashed #bae6fd;
-            }
-            .qr-section p {
-              font-weight: 600;
-              color: #075985;
-              font-size: 1rem;
-              margin-bottom: 1.25rem;
-            }
-            .qr-container {
-              display: inline-block;
-              background: white;
-              padding: 1rem;
-              border-radius: 0.5rem;
-              border: 1px solid #e5e7eb;
-              margin-bottom: 1rem;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-            .qr-note {
-              font-size: 0.85rem;
-              color: #4b5563;
-              max-width: 300px;
-              margin: 0 auto;
-              line-height: 1.5;
-            }
-            .footer {
-              text-align: center;
-              color: #4b5563;
-              font-size: 0.85rem;
-              padding-top: 2rem;
-              margin-top: 2.5rem;
-              border-top: 1px solid #e5e7eb;
-              line-height: 1.6;
-            }
-            .footer strong {
-              color: #075985;
-            }
-            .policy-list {
-              list-style-type: none;
-              padding-left: 0;
-            }
-            .policy-list li {
-              position: relative;
-              padding-left: 1.5rem;
-              margin-bottom: 0.75rem;
-            }
-            .policy-list li:before {
-              content: "•";
-              color: #075985;
-              font-weight: bold;
-              position: absolute;
-              left: 0;
-            }
-            @media print {
-              body {
-                background: white !important;
-                padding: 0 !important;
-              }
-              .invoice-container {
-                padding: 0 !important;
-                border: none !important;
-                box-shadow: none !important;
-                max-width: 100% !important;
-              }
-              .no-print {
-                display: none !important;
-              }
-            }
-          </style>
-        </head>
-        <body onload="window.print(); setTimeout(() => window.close(), 1000)">
-          <div class="invoice-container">
-            ${printRef.current.innerHTML}
+      <head>
+        <title>Invoice #$</title>
+        <meta charset="UTF-8">
+        <style>
+          @page { size: A4; margin: 20mm; }
+          body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #000; }
+          .invoice-container { max-width: 800px; margin: auto; padding: 20px; }
+
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+          .logo { width: 100px; }
+          .clinic-info { text-align: right; font-size: 14px; }
+          .clinic-name { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
+
+          .invoice-title { text-align: center; font-size: 22px; font-weight: bold; margin: 20px 0; }
+
+          .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; margin-bottom: 20px; }
+          .patient-info p { margin: 3px 0; }
+
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+          th, td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 14px; }
+          th { background-color: #f2f2f2; }
+
+          .totals { float: right; width: 300px; margin-top: 20px; }
+          .totals td { padding: 6px; text-align: right; border: none; font-size: 14px; }
+
+          .signatures { display: flex; justify-content: space-between; margin-top: 80px; font-size: 14px; }
+          .sign-box { text-align: center; width: 40%; }
+          .sign-line { border-top: 1px solid #000; margin-top: 60px; width: 80%; margin-left: auto; margin-right: auto; }
+
+          .footer { text-align: center; margin-top: 50px; font-size: 13px; }
+          @media print { .no-print { display: none !important; } }
+        </style>
+      </head>
+      <body onload="window.print(); setTimeout(() => window.close(), 1000)">
+        <div class="invoice-container">
+          <div class="header">
+            <img src="${imageCompany}/images/logo.png" alt="Logo" class="logo" />
+            <div class="clinic-info">
+              <div class="clinic-name">META DENTAL CLINIC</div>
+              <div>Tel: $</div>
+            </div>
           </div>
-        </body>
+
+          <div class="invoice-title">Invoice</div>
+
+          <div class="patient-info">
+            <div>
+              <p><strong>Patient Name:</strong> $</p>
+              <p><strong>Phone Number:</strong> $</p>
+            </div>
+            <div>
+              <p><strong>Date:</strong> $</p>
+              <p><strong>Doctor:</strong> $</p>
+              <p><strong>Invoice No.:</strong> $</p>
+              <p><strong>Tel:</strong> $</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>#Teeth</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoicePatients.items?.map(item => `
+                <tr>
+                  <td>${item.description}</td>
+                  <td>${item.teeth}</td>
+                  <td>${item.quantity}</td>
+                  <td>${item.price}</td>
+                  <td>${item.amount}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <table class="totals">
+            <tr><td>Total</td><td>$$</td></tr>
+            <tr><td>Payments</td><td>$$</td></tr>
+            <tr><td><strong>Balance Due</strong></td><td><strong>$$</strong></td></tr>
+          </table>
+
+          <div class="signatures">
+            <div class="sign-box">
+              <p><strong>Doctor's Signature</strong></p>
+              <div class="sign-line"></div>
+            </div>
+            <div class="sign-box">
+              <p><strong>Cashier</strong></p>
+              <div class="sign-line"></div>
+            </div>
+          </div>
+
+          <div class="footer">
+            Address: $<br />
+            Telephone: $
+          </div>
+        </div>
+      </body>
       </html>
     `);
     printWindow.document.close();
@@ -315,432 +197,84 @@ const InvoiceLetter = ({ payment, onClose }) => {
   };
 
   return (
-    <div className={`p-4 md:p-6 ${isDark ? "bg-gray-900" : "bg-amber-50"} min-h-screen`}>
-      <div
-        ref={printRef}
-        className={`mx-auto ${
-          isDark ? "bg-gray-800 text-gray-100" : "bg-white text-gray-800"
-        } 
-          p-6 md:p-8 rounded-xl shadow-lg font-sans border ${
-            isDark ? "border-gray-700" : "border-amber-200"
-          } transition-all duration-200`}
-        style={{ maxWidth: "800px" }}
-      >
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 pb-6 border-b border-amber-200">
-          <div className="mb-4 md:mb-0">
-            <h2 className="text-2xl md:text-3xl font-bold text-amber-600 mb-2">
-              Concept Dental Clinic
-            </h2>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">123 Smile Street, Dental City</p>
-              <p className="text-sm text-gray-500">Phone: (123) 456-7890</p>
-              <p className="text-sm text-gray-500">Email: info@conceptdental.com</p>
-              <p className="text-sm text-gray-500 mt-2">
-                Tax ID: DC-123456789 | Dental License: DL-987654
-              </p>
-            </div>
-          </div>
-          <div className="text-right">
-            <h3 className="text-2xl font-bold text-amber-600 mb-2">INVOICE</h3>
-            <div className="space-y-1">
-              <p className="text-sm text-gray-500">Issued: {currentDate}</p>
-              <p className="text-sm text-gray-500">
-                Invoice #: {payment.id.toString().padStart(5, "0")}
-              </p>
-              {payment.dueDate && (
-                <p className="text-sm font-medium text-amber-600">
-                  Due: {payment.dueDate}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Patient Information Section */}
-        <div
-          className={`mb-8 p-6 rounded-lg ${
-            isDark ? "bg-gray-700" : "bg-amber-50"
-          } border ${isDark ? "border-gray-600" : "border-amber-200"}`}
-        >
-          <h4 className="text-lg font-semibold text-amber-600 mb-4 flex items-center">
-            <span className="mr-2">👤</span> PATIENT INFORMATION
-          </h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-3">
-              <p className="flex items-start">
-                <span className="font-medium min-w-[120px]">Name:</span>
-                {payment.patient.name}
-              </p>
-              {payment.phone && (
-                <p className="flex items-start">
-                  <span className="font-medium min-w-[120px]">Phone:</span>
-                  {payment.patient.phone}
-                </p>
-              )}
-              {payment.email && (
-                <p className="flex items-start">
-                  <span className="font-medium min-w-[120px]">Email:</span>
-                  {payment.email}
-                </p>
-              )}
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-start">
-                <span className="font-medium min-w-[120px]">Status:</span>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    payment.paid
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                  }`}
-                >
-                  {payment.status ? "PAID" : "UNPAID"}
-                </span>
-              </div>
-              <p className="flex items-start">
-                <span className="font-medium min-w-[120px]">Appointment:</span>
-                {payment.date || currentDate}
-              </p>
-              {payment.doctor && (
-                <p className="flex items-start">
-                  <span className="font-medium min-w-[120px]">Dentist:</span>
-                  {payment.doctor}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Treatment Details Section */}
-        <div className="mb-10">
-          <h4 className="text-xl font-semibold text-amber-600 mb-4 flex items-center">
-            <span className="mr-2">🦷</span> TREATMENT DETAILS
-          </h4>
-          <div className="overflow-x-auto rounded-lg shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead
-                className={`${
-                  isDark ? "bg-gray-700" : "bg-amber-600"
-                } text-white`}
-              >
-                <tr>
-                  <th className="px-6 py-3 text-left text-sm font-bold uppercase tracking-wider">
-                    #
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-bold uppercase tracking-wider">
-                    Procedure
-                  </th>
-                  <th className="px-6 py-3 text-left text-sm font-bold uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th className="px-6 py-3 text-right text-sm font-bold uppercase tracking-wider">
-                    Amount
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {(Array.isArray(payment.treat) ? payment.treat : []).map((treatment, index) => (
-                  <tr
-                    key={index}
-                    className={`${
-                      index % 2 === 0
-                        ? isDark
-                          ? "bg-gray-800"
-                          : "bg-amber-50"
-                        : isDark
-                        ? "bg-gray-900"
-                        : "bg-white"
-                    } hover:bg-opacity-90 transition-colors`}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">{index + 1}</td>
-                    <td className="px-6 py-4 font-medium whitespace-nowrap">
-                      {treatment.name || "Dental Procedure"}
-                    </td>
-                    <td className="px-6 py-4">
-                      {treatment.description || "Standard dental treatment"}
-                    </td>
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      ${treatment.cost || payment.total}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Payment Summary Section */}
-        <div className="mb-10">
-          <div className="flex justify-end">
-            <div className="w-full md:w-2/3 lg:w-1/2">
-              <div className="rounded-lg shadow-sm overflow-hidden">
-                <table className="w-full text-sm">
-                  <tbody>
-                    <tr className={isDark ? "bg-gray-800" : "bg-amber-50"}>
-                      <td className="p-4 font-semibold">Subtotal</td>
-                      <td className="p-4 text-right">${payment.total}</td>
-                    </tr>
-                    {payment.discount > 0 && (
-                      <tr className={isDark ? "bg-gray-800" : "bg-amber-50"}>
-                        <td className="p-4 font-semibold">Discount</td>
-                        <td className="p-4 text-right text-green-600">
-                          -${payment.discount.toFixed(2)}
-                        </td>
-                      </tr>
-                    )}
-                    {payment.tax > 0 && (
-                      <tr className={isDark ? "bg-gray-800" : "bg-amber-50"}>
-                        <td className="p-4 font-semibold">
-                          Tax ({payment.taxRate || 0}%)
-                        </td>
-                        <td className="p-4 text-right">
-                          ${payment.tax.toFixed(2)}
-                        </td>
-                      </tr>
-                    )}
-                    {payment.deposit > 0 && (
-                      <tr className={isDark ? "bg-gray-800" : "bg-amber-50"}>
-                        <td className="p-4 font-semibold">Deposit Paid</td>
-                        <td className="p-4 text-right text-green-600">
-                          -${payment.deposit.toFixed(2)}
-                        </td>
-                      </tr>
-                    )}
-                    <tr
-                      className={`${
-                        isDark ? "bg-gray-700" : "bg-amber-200"
-                      } border-t-2 border-amber-300`}
-                    >
-                      <td className="p-4 font-bold text-lg">TOTAL</td>
-                      <td className="p-4 text-right font-bold text-lg">
-                        $
-                        {(
-                          payment.total +
-                          (payment.tax || 0) -
-                          (payment.discount || 0) -
-                          (payment.deposit || 0)
-                        ).toFixed(2)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Information Section */}
-        <div className="mb-8">
-          <div
-            className={`p-6 rounded-lg ${
-              isDark ? "bg-gray-700" : "bg-amber-50"
-            } border ${isDark ? "border-gray-600" : "border-amber-200"}`}
-          >
-            <h4 className="text-lg font-semibold text-amber-600 mb-4 flex items-center">
-              <span className="mr-2">💳</span> PAYMENT INFORMATION
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <p className="flex items-start">
-                  <span className="font-medium min-w-[150px]">Method:</span>
-                  {payment.pay?.name || "Credit Card"}
-                </p>
-                {payment.transactionId && (
-                  <p className="flex items-start">
-                    <span className="font-medium min-w-[150px]">Transaction ID:</span>
-                    {payment.transactionId}
-                  </p>
-                )}
-                {payment.paidDate && (
-                  <p className="flex items-start">
-                    <span className="font-medium min-w-[150px]">Paid Date:</span>
-                    {payment.paidDate}
-                  </p>
-                )}
-                <div className="mt-4">
-                  <p className="font-medium">Accepted Payment Methods:</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Credit/Debit Cards, Bank Transfer, KHQR, Cash
-                  </p>
-                </div>
-              </div>
-
-              {!payment.paid && (
-                <div className="flex flex-col items-center">
-                  <p className="text-md font-semibold mb-3 text-center">
-                    Scan to Pay via Mobile Banking
-                  </p>
-                  <div
-                    className={`p-4 rounded-lg ${
-                      isDark ? "bg-gray-600" : "bg-white"
-                    } shadow-md border ${
-                      isDark ? "border-gray-500" : "border-amber-200"
-                    }`}
-                  >
-                    <img
-                      src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmllFzhBwp8Evri_db9P1XGueBmvGKQiD3cg&s"
-                      alt="Payment QR Code"
-                      className="w-36 h-36 mx-auto"
-                      style={{ filter: isDark ? "invert(1)" : "none" }}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3 text-center max-w-xs">
-                    Compatible with ABA, ACLEDA, and other KHQR participating banks
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Footer Section */}
-        <div className="mt-8 pt-6 border-t border-amber-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
-            <div>
-              <h4 className="text-lg font-semibold text-amber-600 mb-3 flex items-center">
-                <span className="mr-2">📋</span> CLINIC POLICIES
-              </h4>
-              <ul className="space-y-2">
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Payment is due within 15 days of invoice date</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>1.5% late fee applied monthly to overdue balances</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Cancellation requires 24 hours notice to avoid fees</span>
-                </li>
-                <li className="flex items-start">
-                  <span className="mr-2">•</span>
-                  <span>Insurance claims are patient's responsibility</span>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="text-lg font-semibold text-amber-600 mb-3 flex items-center">
-                <span className="mr-2">🙏</span> THANK YOU
-              </h4>
-              <p className="mb-3">
-                We appreciate your trust in our dental care services. Please don't
-                hesitate to contact us with any questions about your treatment or
-                this invoice.
-              </p>
-              <p className="font-medium text-amber-600">
-                Your oral health is our priority!
-              </p>
-            </div>
-          </div>
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Concept Dental Clinic • 123 Smile Street, Dental City • (123) 456-7890 •
-            info@conceptdental.com
-          </p>
-        </div>
+    <div className="p-4 bg-gray-100 min-h-screen">
+      {/* Preview container */}
+      <div ref={printRef} className="bg-white p-6 rounded shadow max-w-3xl mx-auto">
+        <p className="text-center text-xl font-semibold">Invoice Preview (Click Print to Generate)</p>
       </div>
 
-      {/* Action Buttons */}
-      <div className="mt-8 flex flex-wrap gap-4 justify-center no-print">
+      {/* Buttons */}
+      <div className="mt-8 flex justify-center gap-4 no-print">
         <button
           onClick={handlePrint}
           disabled={isPrinting}
-          className={`flex items-center gap-2 ${
-            isPrinting ? "bg-amber-400" : "bg-amber-600 hover:bg-amber-700"
-          } text-white px-6 py-3 rounded-lg shadow-md transition-colors`}
+          className={`flex items-center gap-2 ${isPrinting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white px-6 py-2 rounded-md shadow transition-colors`}
         >
-          {isPrinting ? (
-            <>
-              <FiLoader className="animate-spin text-lg" />
-              Printing...
-            </>
-          ) : (
-            <>
-              <FiPrinter className="text-lg" />
-              Print Invoice
-            </>
-          )}
+          {isPrinting ? <><FiLoader className="animate-spin" /> Printing...</> : <><FiPrinter /> Print Invoice</>}
         </button>
         <button
           onClick={onClose}
-          className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
+          className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md shadow transition-colors"
         >
-          <FiArrowLeft className="text-lg" />
-          Back to Payments
+          <FiArrowLeft />
+          Back
         </button>
       </div>
     </div>
   );
 };
 
-const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
 
+const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
   const dispatch = useDispatch();
   const { patients } = useSelector((state) => state.patient);
-  const { treats } = useSelector((state) => state.treat);
+  const { doctors } = useSelector((state) => state.doctor);
   const { pays } = useSelector((state) => state.pay);
+
+  const [patient_id, setPatient] = useState("");
+  const [phone, setPhone] = useState("");
+ const [doctor_id, setDoctor] = useState("");
+  const [price, setPrice] = useState(0);
+  const [pay_id, setMethod] = useState("");
+  const [deposit, setDeposit] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [debt, setDebt] = useState(0);
+  const [status, setStatus] = useState("");
   
-  const [patient , setPatient] = useState("");
-  const [phone , setPhone] = useState("");
-  const [treat  , setTreatments] = useState([]);
-  const [price , setPrice] = useState(0);
-  const [method , setMethod] = useState("");
-  const [deposit , setDeposit] = useState(0);
-  const [total , setTotal] = useState(0);
-  const [debt , setDebt] = useState(0);
-  const [alertMessage, setAlertMessage] = useState(null);
- 
-  const handleSave = async (e) =>{
+
+  const handleSave = async (e) => {
     e.preventDefault();
     const data = {
-      patient_id: patient,
+      patient_id: patient_id,
+      doctor_id: doctor_id,
       phone: phone,
-      treat_id: treat,
       price: price,
-      method: method,
+      pay_id: pay_id,
       deposit: deposit,
       total: total,
-      debt: debt
-
-    }
-    try{
+      debt: debt,
+      status: status,
+      
+     
+    };
+    try {
       await dispatch(createInvoicePatient(data));
       dispatch(fetchInvoicePatients());
-       Swal.fire({
-              icon: "success",
-              title: "payment created successfully!",
-              showConfirmButton: false,
-              timer: 1500,
-              position: "top-end",
-          });
-
-    }catch(e){
-       Swal.fire({
-              icon: "success",
-              title: "payment create warning !",
-              showConfirmButton: false,
-              timer: 1500,
-              position: "top-end",
-          });
+      toast.success('Payment created successfully!', { position: "top-right" });
+      
+      onClose();
+    } catch (e) {
+      toast.error(`Error creating payment: ${e.message}`, { position: "top-right" });
+      
     }
+  };
 
-
-  }
-
-     useEffect(() => {
-    if (alertMessage) {
-      Swal.fire({
-        icon: alertMessage.type,
-        title: alertMessage.text,
-        showConfirmButton: false,
-        timer: 1500,
-        position: "top-end",
-      });
-      setAlertMessage(null); // clear after showing
-    }
-  }, [alertMessage]);
   
+
+  useEffect(() => {
+    const calculatedDebt = parseFloat(total) - parseFloat(deposit);
+    setDebt(calculatedDebt > 0 ? calculatedDebt : 0);
+  }, [total, deposit]);
 
   if (!isOpen) return null;
 
@@ -749,6 +283,7 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       data-aos="zoom-in"
     >
+       <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
       <div
         className={`rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto ${
           isDark ? "bg-gray-800 text-gray-100" : "bg-white text-gray-800"
@@ -766,40 +301,77 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSave}  className="p-4 space-y-4">
+        <form onSubmit={handleSave} className="p-4 space-y-4">
           <div>
-      <label htmlFor="patient-select" className="block text-sm font-medium mb-1">
-        Patient Name <span className="text-red-500">*</span>
-      </label>
+            <label
+              htmlFor="patient-select"
+              className="block text-sm font-medium mb-1"
+            >
+              Patient Name <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                <FiUser />
+              </span>
+              <select
+                id="patient-select"
+                name="patient_id"
+                value={patient_id}
+                onChange={(e) => setPatient(e.target.value)}
+                className={`pl-10 w-full p-2 border rounded-lg appearance-none ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
+                required
+              >
+                <option value="" disabled>
+                  -- Select a patient --
+                </option>
+                {patients.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-      <div className="relative">
-        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-          <FiUser />
-        </span>
+            <div>
+            <label
+              htmlFor="patient-select"
+              className="block text-sm font-medium mb-1"
+            >
+              Doctor Name <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                <FiUser />
+              </span>
+              <select
+                id="patient-select"
+                name="doctor_id"
+                value={doctor_id}
+                onChange={(e) => setDoctor(e.target.value)}
+                className={`pl-10 w-full p-2 border rounded-lg appearance-none ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
+                required
+              >
+                <option value="" disabled>
+                   Select a doctor
+                </option>
+                {doctors.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-        <select
-          id="patient-select"
-          name="patient"
-          value={patient}
-          onChange={(e) => setPatient(e.target.value)}
-          className={`pl-10 w-full p-2 border rounded-lg appearance-none ${
-            isDark
-              ? "bg-gray-700 border-gray-600 text-white"
-              : "bg-white border-gray-300 text-black"
-          }`}
-          required
-        >
-          <option value="" disabled>
-            -- Select a patient --
-          </option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -809,8 +381,7 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
               type="tel"
               name="phone"
               value={phone}
-              onChange={(e) => setPhone (e.target.value)}
-             
+              onChange={(e) => setPhone(e.target.value)}
               className={`w-full p-2 border rounded-lg ${
                 isDark
                   ? "bg-gray-700 border-gray-600"
@@ -819,42 +390,7 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
             />
           </div>
 
-          <div>
-      <label className="block text-sm font-medium mb-1">
-        Treatments (select or type) <span className="text-red-500">*</span>
-      </label>
-
-      {/* Select to add treatment */}
-      <select
         
-        className={`mb-2 w-full p-2 border rounded-lg ${
-          isDark ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-black"
-        }`}
-        defaultValue=""
-      >
-        <option value="" disabled>
-          -- Select treatment to add --
-        </option>
-        {treats.map((t) => (
-          <option key={t.id} value={t.name}>
-            {t.name}
-          </option>
-        ))}
-      </select>
-
-      {/* Textarea for comma-separated treatments */}
-      <textarea
-        name="treat"
-        value={treat}
-        onChange={(e) => setTreat(e.target.value)}
-        className={`w-full p-2 border rounded-lg ${
-          isDark ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-black"
-        }`}
-        rows="2"
-        required
-        placeholder="Cleaning, Filling, Extraction"
-      />
-    </div>
 
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -864,8 +400,7 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
               type="text"
               name="price"
               value={price}
-              onChange={(e) => setPrice (e.target.value)}
-             
+              onChange={(e) => setPrice(e.target.value)}
               className={`w-full p-2 border rounded-lg ${
                 isDark
                   ? "bg-gray-700 border-gray-600"
@@ -874,25 +409,6 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
               placeholder="80, 70, 100"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Debt
-            </label>
-            <input
-              type="text"
-              name="debt"
-              value={debt}
-              onChange={(e) => setDebt (e.target.value)}
-             
-              className={`w-full p-2 border rounded-lg ${
-                isDark
-                  ? "bg-gray-700 border-gray-600"
-                  : "bg-white border-gray-300"
-              }`}
-              placeholder="80, 70, 100"
-            />
-          </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
@@ -906,8 +422,7 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
                   type="number"
                   name="total"
                   value={total}
-                  onChange={(e) => setTotal (e.target.value)}
-                 
+                  onChange={(e) => setTotal(e.target.value)}
                   min="0"
                   step="0.01"
                   className={`pl-10 w-full p-2 border rounded-lg ${
@@ -925,8 +440,7 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
                 type="number"
                 name="deposit"
                 value={deposit}
-                onChange={(e) => setDeposit (e.target.value)}
-               
+                onChange={(e) => setDeposit(e.target.value)}
                 min="0"
                 step="0.01"
                 className={`w-full p-2 border rounded-lg ${
@@ -937,51 +451,71 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
               />
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium mb-1">Debt</label>
+            <input
+              type="number"
+              name="debt"
+              value={debt}
+              readOnly
+              className={`w-full p-2 border rounded-lg ${
+                isDark
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-gray-100 border-gray-300 text-black"
+              }`}
+            />
+          </div>
 
           <div>
-      <label className="block text-sm font-medium mb-1">Payment Method</label>
-      <div className="relative">
-        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
-          <FiCreditCard />
-        </span>
-        <select
-          name="method"
-          value={method}
-          onChange={(e) => setMethod(e.target.value)}
-          className={`pl-10 w-full p-2 border rounded-lg appearance-none ${
-            isDark ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-black"
-          }`}
-        >
-          {/* Optional placeholder */}
-          <option value="" disabled>
-            -- Select payment method --
-          </option>
-          {pays.map((pay) => (
-            <option key={pay.id} value={pay.name}>
-              {pay.name}
-            </option>
-          ))}
-        </select>
-      </div>
-    </div>
+            <label className="block text-sm font-medium mb-1">
+              Payment Method
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+                <FiCreditCard />
+              </span>
+              <select
+                name="pay_id"
+                value={pay_id}
+                onChange={(e) => setMethod(e.target.value)}
+                className={`pl-10 w-full p-2 border rounded-lg appearance-none ${
+                  isDark
+                    ? "bg-gray-700 border-gray-600 text-white"
+                    : "bg-white border-gray-300 text-black"
+                }`}
+              >
+                <option value="" disabled>
+                  -- Select payment method --
+                </option>
+                {pays.map((pay) => (
+                  <option key={pay.id} value={pay.id}>
+                    {pay.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-         
-
-          <div className="flex items-center">
-            <input
-              type="checkbox"
+          <div>
+            <label className="block text-sm font-medium mb-1">Status</label>
+            <select
               name="status"
               value={status}
-              onChange={(e) => setStatus (e.target.checked)}
-             
-              className={`h-5 w-5 rounded ${
-                isDark ? "bg-gray-700 border-gray-600" : "border-gray-300"
+              onChange={(e) => setStatus(e.target.value)}
+              className={`w-full p-2 border rounded-lg ${
+                isDark
+                  ? "bg-gray-700 border-gray-600 text-white"
+                  : "bg-white border-gray-300 text-black"
               }`}
-              id="paidCheckbox"
-            />
-            <label htmlFor="paidCheckbox" className="ml-2 text-sm font-medium">
-              Mark as Paid
-            </label>
+              required
+            >
+              <option value="" disabled>
+                Select status
+              </option>
+              <option value="paid">Paid</option>
+              <option value="unpaid">Unpaid</option>
+              <option value="pending">Pending</option>
+            </select>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">
@@ -1011,11 +545,8 @@ const PaymentModal = ({ isOpen, onClose, onSubmit, isDark, paymentToEdit }) => {
 
 const Payment = () => {
   const { isDark } = useContext(ThemeContext);
-
   const dispatch = useDispatch();
   const { patients } = useSelector((state) => state.patient);
-  const { treats } = useSelector((state) => state.treat);
-  const { pays } = useSelector((state) => state.pay);
   const { invoicePatients } = useSelector((state) => state.invoicePatient);
 
   useEffect(() => {
@@ -1023,9 +554,13 @@ const Payment = () => {
     dispatch(fetchTreats());
     dispatch(fetchInvoicePatients());
     dispatch(fetchPays());
+    dispatch(fetchDoctors())
   }, [dispatch]);
- const phoneNumbers = Array.isArray(patients)
-    ? patients.map(p => p.phone || 'N/A')
+
+  console.log("invoice patient status", invoicePatients.status);
+
+  const phoneNumbers = Array.isArray(patients)
+    ? patients.map((p) => p.phone || "N/A")
     : [];
   console.log(phoneNumbers);
 
@@ -1034,17 +569,26 @@ const Payment = () => {
   const [paymentToEdit, setPaymentToEdit] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const paymentsPerPage = 5;
+  const [statusFilter, setStatusFilter] = useState("all");
 
- const filteredPayments = Array.isArray(invoicePatients)
-  ? invoicePatients.filter(
-      (payment) =>
-        (payment.patient &&
-          payment.patient.name &&
-          payment.patient.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (payment.phone && payment.phone.includes(searchTerm))
-    )
-  : [];
+  const paymentsPerPage = 3;
+
+  const filteredPayments = Array.isArray(invoicePatients)
+    ? invoicePatients.filter((payment) => {
+        const matchesSearch =
+          (payment.patient &&
+            payment.patient.name &&
+            payment.patient.name
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())) ||
+          (payment.phone && payment.phone.includes(searchTerm));
+
+        const matchesStatus =
+          statusFilter === "all" || payment.status === statusFilter;
+
+        return matchesSearch && matchesStatus;
+      })
+    : [];
 
   const totalPages = Math.ceil(filteredPayments.length / paymentsPerPage);
   const indexOfLastPayment = currentPage * paymentsPerPage;
@@ -1053,6 +597,249 @@ const Payment = () => {
     indexOfFirstPayment,
     indexOfLastPayment
   );
+
+  // Doughnut Chart Data Preparation
+  const getPaymentSummaryData = () => {
+    const totalAmount = Array.isArray(invoicePatients)
+      ? invoicePatients.reduce((sum, p) => sum + parseFloat(p.total || 0), 0)
+      : 0;
+    const totalPaid = Array.isArray(invoicePatients)
+      ? invoicePatients
+          .filter((p) => p.status === "paid")
+          .reduce((sum, p) => sum + parseFloat(p.deposit || 0), 0)
+      : 0;
+
+    return {
+      labels: [
+        `Total Amount ($${totalAmount.toFixed(2)})`,
+        `Total Paid ($${totalPaid.toFixed(2)})`,
+      ],
+      datasets: [
+        {
+          label: "Payment Summary",
+          data: [totalAmount, totalPaid],
+          backgroundColor: [
+            isDark ? "rgba(234, 88, 12, 0.6)" : "rgba(249, 115, 22, 0.6)", // Orange for Total Amount
+            isDark ? "rgba(34, 197, 94, 0.6)" : "rgba(22, 163, 74, 0.6)", // Green for Total Paid
+          ],
+          borderColor: [
+            isDark ? "rgb(234, 88, 12)" : "rgb(249, 115, 22)",
+            isDark ? "rgb(34, 197, 94)" : "rgb(22, 163, 74)",
+          ],
+          borderWidth: 2,
+          hoverBackgroundColor: [
+            isDark ? "rgba(234, 88, 12, 0.8)" : "rgba(249, 115, 22, 0.8)",
+            isDark ? "rgba(34, 197, 94, 0.8)" : "rgba(22, 163, 74, 0.8)",
+          ],
+        },
+      ],
+    };
+  };
+
+  const doughnutChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          color: isDark ? "#e5e7eb" : "#374151",
+          font: {
+            size: 14,
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: "Payment Summary",
+        color: isDark ? "#e5e7eb" : "#374151",
+        font: {
+          size: 18,
+          weight: "bold",
+        },
+        padding: {
+          top: 10,
+          bottom: 20,
+        },
+      },
+      tooltip: {
+        backgroundColor: isDark
+          ? "rgba(31, 41, 55, 0.9)"
+          : "rgba(255, 255, 255, 0.9)",
+        titleColor: isDark ? "#e5e7eb" : "#374151",
+        bodyColor: isDark ? "#e5e7eb" : "#374151",
+        borderColor: isDark ? "#4b5563" : "#d1d5db",
+        borderWidth: 1,
+        callbacks: {
+          label: function (context) {
+            const label = context.label || "";
+            const value = context.parsed || 0;
+            const total = context.dataset.data[0]; // Total Amount
+            const percentage =
+              total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            return `${label}: $${value.toFixed(2)} (${percentage}%)`;
+          },
+        },
+      },
+    },
+    cutout: "60%", // Makes it a doughnut chart with a thicker ring
+  };
+
+  // Line Chart Data Preparation for Unpaid and Pending Trends
+  const getUnpaidPendingTrendData = () => {
+    if (!Array.isArray(invoicePatients) || invoicePatients.length === 0) {
+      return {
+        labels: [],
+        datasets: [],
+      };
+    }
+
+    // Group payments by date (YYYY-MM-DD)
+    const trendData = invoicePatients.reduce((acc, payment) => {
+      if (!payment.created_at) return acc; // Skip if no creation date
+      const date = dayjs(payment.created_at).format("YYYY-MM-DD");
+      if (!acc[date]) {
+        acc[date] = { unpaid: 0, pending: 0 };
+      }
+      const outstanding =
+        parseFloat(payment.total || 0) - parseFloat(payment.deposit || 0);
+      if (payment.status === "unpaid") {
+        acc[date].unpaid += outstanding;
+      } else if (payment.status === "pending") {
+        acc[date].pending += outstanding;
+      }
+      return acc;
+    }, {});
+
+    // Generate labels and data for the last 30 days
+    const days = 30;
+    const labels = [];
+    const unpaidData = [];
+    const pendingData = [];
+    const today = dayjs();
+
+    for (let i = days - 1; i >= 0; i--) {
+      const date = today.subtract(i, "day").format("YYYY-MM-DD");
+      labels.push(date);
+      unpaidData.push(trendData[date]?.unpaid.toFixed(2) || 0);
+      pendingData.push(trendData[date]?.pending.toFixed(2) || 0);
+    }
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Unpaid Amount",
+          data: unpaidData,
+          borderColor: isDark ? "rgb(220, 38, 38)" : "rgb(239, 68, 68)", // Red
+          backgroundColor: isDark
+            ? "rgba(220, 38, 38, 0.2)"
+            : "rgba(239, 68, 68, 0.2)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+        {
+          label: "Pending Amount",
+          data: pendingData,
+          borderColor: isDark ? "rgb(234, 179, 8)" : "rgb(245, 158, 11)", // Yellow
+          backgroundColor: isDark
+            ? "rgba(234, 179, 8, 0.2)"
+            : "rgba(245, 158, 11, 0.2)",
+          fill: true,
+          tension: 0.4,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+        },
+      ],
+    };
+  };
+
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          color: isDark ? "#e5e7eb" : "#374151",
+          font: {
+            size: 14,
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: "Unpaid & Pending Trend",
+        color: isDark ? "#e5e7eb" : "#374151",
+        font: {
+          size: 18,
+          weight: "bold",
+        },
+        padding: {
+          top: 10,
+          bottom: 20,
+        },
+      },
+      tooltip: {
+        backgroundColor: isDark
+          ? "rgba(31, 41, 55, 0.9)"
+          : "rgba(255, 255, 255, 0.9)",
+        titleColor: isDark ? "#e5e7eb" : "#374151",
+        bodyColor: isDark ? "#e5e7eb" : "#374151",
+        borderColor: isDark ? "#4b5563" : "#d1d5db",
+        borderWidth: 1,
+        callbacks: {
+          label: function (context) {
+            const label = context.dataset.label || "";
+            const value = context.parsed.y || 0;
+            return `${label}: $${value}`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: "Date",
+          color: isDark ? "#e5e7eb" : "#374151",
+          font: {
+            size: 14,
+          },
+        },
+        ticks: {
+          color: isDark ? "#e5e7eb" : "#374151",
+          maxRotation: 45,
+          minRotation: 45,
+        },
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        title: {
+          display: true,
+          text: "Amount ($)",
+          color: isDark ? "#e5e7eb" : "#374151",
+          font: {
+            size: 14,
+          },
+        },
+        ticks: {
+          color: isDark ? "#e5e7eb" : "#374151",
+          callback: function (value) {
+            return `$${value}`;
+          },
+        },
+        grid: {
+          color: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+        },
+        beginAtZero: true,
+      },
+    },
+  };
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -1066,11 +853,43 @@ const Payment = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
- 
-
   const handleEditPayment = (payment) => {
     setPaymentToEdit(payment);
     setIsModalOpen(true);
+  };
+
+  const handleDeletePayment = async (paymentId) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await dispatch(deleteInvoicePatient(paymentId));
+        dispatch(fetchInvoicePatients());
+        Swal.fire({
+          icon: "success",
+          title: "Payment deleted successfully!",
+          showConfirmButton: false,
+          timer: 1500,
+          position: "top-end",
+        });
+      } catch (e) {
+        Swal.fire({
+          icon: "error",
+          title: "Payment deletion failed!",
+          showConfirmButton: false,
+          timer: 1500,
+          position: "top-end",
+        });
+      }
+    }
   };
 
   return (
@@ -1080,7 +899,7 @@ const Payment = () => {
       }`}
     >
       {selectedPayment ? (
-        <InvoiceLetter
+        <Invoice
           payment={selectedPayment}
           onClose={() => setSelectedPayment(null)}
         />
@@ -1089,7 +908,7 @@ const Payment = () => {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-orange-600">
-                Payment Management
+                Invoice Management
               </h1>
               <p className="text-sm text-gray-500">
                 Manage patient payments and invoices
@@ -1137,6 +956,8 @@ const Payment = () => {
               <div>
                 <label className="block text-sm font-medium mb-1">Status</label>
                 <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
                   className={`w-full p-2 border rounded-lg ${
                     isDark
                       ? "bg-gray-700 border-gray-600"
@@ -1146,6 +967,7 @@ const Payment = () => {
                   <option value="all">All Payments</option>
                   <option value="paid">Paid Only</option>
                   <option value="unpaid">Unpaid Only</option>
+                  <option value="pending">Pending Only</option>
                 </select>
               </div>
             </div>
@@ -1156,187 +978,209 @@ const Payment = () => {
               isDark ? "bg-gray-800" : "bg-white"
             }`}
           >
-       <div className="overflow-x-auto rounded-lg border shadow-sm">
-          <table className="w-full table-auto">
-  <thead>
-    <tr
-      className={`
-        ${isDark ? "bg-gray-800 text-gray-100" : "bg-gradient-to-r from-orange-500 to-orange-600 text-white"}
-      `}
-    >
-      <th className="p-4 text-left text-sm font-medium first:rounded-tl-lg">ID</th>
-      <th className="p-4 text-left text-sm font-medium">Patient</th>
-      <th className="p-4 text-left text-sm font-medium">Phone</th>
-      <th className="p-4 text-left text-sm font-medium">Treatments</th>
-      <th className="p-4 text-right text-sm font-medium">Due Date</th>
-      <th className="p-4 text-right text-sm font-medium">Total</th>
-      <th className="p-4 text-right text-sm font-medium">price</th>
-      <th className="p-4 text-right text-sm font-medium">deposit</th>
-      <th className="p-4 text-right text-sm font-medium">debt</th>
-      <th className="p-4 text-left text-sm font-medium">Method</th>
-      <th className="p-4 text-left text-sm font-medium">Status</th>
-      <th className="p-4 text-right text-sm font-medium last:rounded-tr-lg">Actions</th>
-    </tr>
-  </thead>
-  <tbody>
-    {Array.isArray(currentPayments) && currentPayments.length > 0 ? (
-      currentPayments.map((payment, index) => (
-        <tr
-          key={payment.id || index}
-          className={`
-            border-t ${isDark ? "border-gray-700 hover:bg-gray-800/50" : "border-gray-100 hover:bg-orange-50"}
-            ${index === currentPayments.length - 1 ? "last:border-b-0" : ""}
-          `}
-        >
-          <td className="p-4 text-sm font-medium">
-            <span className={isDark ? "text-gray-300" : "text-gray-700"}>
-              {payment.id || 'N/A'}
-            </span>
-          </td>
-          <td className="p-4 text-sm">
-            <div className="flex flex-col">
-              <span className={isDark ? "text-gray-100" : "text-gray-800"}>
-                {payment.patient?.name || 'N/A'}
-              </span>
+           <div className="overflow-x-auto rounded-lg border shadow-sm">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr
+                    className={`${
+                      isDark
+                        ? "bg-gray-800 text-gray-100"
+                        : "bg-gradient-to-r from-orange-500 to-orange-600 text-white"
+                    }`}
+                  >
+                    <th className="p-4 text-left text-sm font-medium">ID</th>
+                    <th className="p-4 text-left text-sm font-medium">Patient</th>
+                    <th className="p-4 text-left text-sm font-medium">Phone</th>
+                    <th className="p-4 text-left text-sm font-medium">Doctor</th>
+                    <th className="p-4 text-left text-sm font-medium">Due Date</th>
+                    <th className="p-4 text-right text-sm font-medium">Total</th>
+                    <th className="p-4 text-right text-sm font-medium">Price</th>
+                    <th className="p-4 text-right text-sm font-medium">Deposit</th>
+                    <th className="p-4 text-right text-sm font-medium">Debt</th>
+                    <th className="p-4 text-left text-sm font-medium">Method</th>
+                    <th className="p-4 text-left text-sm font-medium">Status</th>
+                    <th className="p-4 text-right text-sm font-medium">Actions</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {Array.isArray(currentPayments) && currentPayments.length > 0 ? (
+                    currentPayments.map((payment, index) => (
+                      <tr
+                        key={payment.id || index}
+                        className={`border-t ${
+                          isDark
+                            ? "border-gray-700 hover:bg-gray-800/50"
+                            : "border-gray-100 hover:bg-orange-50"
+                        } ${index === currentPayments.length - 1 ? "last:border-b-0" : ""}`}
+                      >
+                        <td className="p-4 text-sm font-medium">
+                          <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                            {payment.id || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-sm">
+                          <span className={isDark ? "text-gray-100" : "text-gray-800"}>
+                            {payment.patient?.name || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-sm">
+                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                            {payment.patient?.phone || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-sm">
+                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                            {payment.doctor?.name || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-sm">
+                          <span className={isDark ? "text-orange-300" : "text-orange-600"}>
+                            {payment.created_at
+                              ? dayjs(payment.created_at).format("YYYY-MM-DD HH:mm:ss")
+                              : ""}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-right text-sm">
+                          <span className={isDark ? "text-orange-300" : "text-orange-600"}>
+                            {payment.total
+                              ? payment.total.toLocaleString("en-US", {
+                                  style: "currency",
+                                  currency: "USD",
+                                })
+                              : "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-right text-sm">
+                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                            {payment.price || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-right text-sm">
+                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                            {payment.deposit || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-right text-sm">
+                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                            {payment.debt || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-sm">
+                          <span
+                            className={`inline-flex items-center gap-1.5 ${
+                              isDark ? "text-gray-300" : "text-gray-600"
+                            }`}
+                          >
+                            {payment.pay?.name === "Credit Card" && (
+                              <FiCreditCard className="h-4 w-4 text-gray-400" />
+                            )}
+                            {payment.pay?.name === "Cash" && (
+                              <FiDollarSign className="h-4 w-4 text-gray-400" />
+                            )}
+                            {payment.pay?.name || "N/A"}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-sm">
+                          <span
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                              payment.status === "paid"
+                                ? isDark
+                                  ? "bg-green-900/50 text-green-200"
+                                  : "bg-green-100 text-green-800"
+                                : payment.status === "unpaid"
+                                ? isDark
+                                  ? "bg-red-900/50 text-red-200"
+                                  : "bg-red-100 text-red-800"
+                                : isDark
+                                ? "bg-yellow-900/50 text-yellow-200"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {payment.status}
+                          </span>
+                        </td>
+
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => handleEditPayment(payment)}
+                              className={`p-2 rounded-md transition-colors ${
+                                isDark
+                                  ? "text-gray-300 hover:bg-gray-700 hover:text-white"
+                                  : "text-gray-500 hover:bg-gray-100 hover:text-orange-600"
+                              }`}
+                              title="Edit"
+                            >
+                              <FiEdit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setSelectedPayment(payment)}
+                              className={`p-2 rounded-md transition-colors ${
+                                isDark
+                                  ? "text-blue-400 hover:bg-gray-700 hover:text-blue-300"
+                                  : "text-blue-600 hover:bg-gray-100 hover:text-blue-700"
+                              }`}
+                              title="View Invoice"
+                            >
+                              <FiDollarSign className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeletePayment(payment.id)}
+                              className={`p-2 rounded-md transition-colors ${
+                                isDark
+                                  ? "text-red-400 hover:bg-gray-700 hover:text-red-300"
+                                  : "text-red-600 hover:bg-gray-100 hover:text-red-700"
+                              }`}
+                              title="Delete"
+                            >
+                              <FiTrash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={12} className="p-8 text-center">
+                        <div className="flex flex-col items-center justify-center space-y-2">
+                          <FiFile
+                            className={`h-12 w-12 ${
+                              isDark ? "text-gray-600" : "text-gray-300"
+                            }`}
+                          />
+                          <p className={isDark ? "text-gray-400" : "text-gray-500"}>
+                            No payments found. Create your first payment.
+                          </p>
+                          <button
+                            onClick={() => setIsModalOpen(true)}
+                            className={`mt-4 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                              isDark
+                                ? "bg-orange-600 hover:bg-orange-700 text-white"
+                                : "bg-orange-500 hover:bg-orange-600 text-white"
+                            }`}
+                          >
+                            <FiPlus className="inline mr-2" />
+                            New Payment
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-          </td>
-          <td className="p-4 text-sm">
-            <span className={isDark ? "text-gray-300" : "text-gray-600"}>
-              {payment.patient?.phone || 'N/A'}
-            </span>
-          </td>
-          <td className="p-4 text-sm">
-            <div className="line-clamp-2 max-w-xs">
-              {Array.isArray(payment.treat)
-                ? payment.treat.map(t => (typeof t === 'string' ? t : t.name || 'Unknown')).join(', ')
-                : payment.treat?.name || 'N/A'}
-            </div>
-          </td>
-          <td className="p-4 text-right text-sm font-medium">
-            <span className={isDark ? "text-orange-300" : "text-orange-600"}>
-               {payment.created_at ? dayjs(payment.created_at).format("YYYY-MM-DD HH:mm:ss") : ""}
-            </span>
-          </td>
-          <td className="p-4 text-right text-sm font-medium">
-            <span className={isDark ? "text-orange-300" : "text-orange-600"}>
-              {payment.total ? payment.total.toLocaleString('en-US', { style: 'currency', currency: 'USD' }) : 'N/A'}
-            </span>
-          </td>
-           <td className="p-4 text-sm">
-            <span className={isDark ? "text-gray-300" : "text-gray-600"}>
-              {payment.price || 'N/A'}
-            </span>
-          </td>
-           <td className="p-4 text-sm">
-            <span className={isDark ? "text-gray-300" : "text-gray-600"}>
-              {payment.deposit || 'N/A'}
-            </span>
-          </td>
-           <td className="p-4 text-sm">
-            <span className={isDark ? "text-gray-300" : "text-gray-600"}>
-              {payment.debt || 'N/A'}
-            </span>
-          </td>
-          <td className="p-4 text-sm">
-            <span className={`inline-flex items-center gap-1.5 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-              {payment.pay?.name === 'Credit Card' && (
-                <FiCreditCard className="h-4 w-4 text-gray-400" />
-              )}
-              {payment.pay?.name === 'Cash' && (
-                <FiDollarSign className="h-4 w-4 text-gray-400" />
-              )}
-              {payment.pay?.name || 'N/A'}
-            </span>
-          </td>
-          <td className="p-4 text-sm">
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                payment.paid
-                  ? isDark
-                    ? "bg-green-900/50 text-green-200"
-                    : "bg-green-100 text-green-800"
-                  : isDark
-                    ? "bg-red-900/50 text-red-200"
-                    : "bg-red-100 text-red-800"
-              }`}
-            >
-              {payment.status ? (
-                <>
-                  <FiCheckCircle className="h-3 w-3 mr-1" />
-                  Paid
-                </>
-              ) : (
-                <>
-                  <FiXCircle className="h-3 w-3 mr-1" />
-                  Unpaid
-                </>
-              )}
-            </span>
-          </td>
-          <td className="p-4 text-right">
-            <div className="flex justify-end gap-1">
-              <button
-                onClick={() => handleEditPayment(payment)}
-                className={`
-                  p-2 rounded-md transition-colors
-                  ${isDark ? "text-gray-300 hover:bg-gray-700 hover:text-white" : "text-gray-500 hover:bg-gray-100 hover:text-orange-600"}
-                `}
-                title="Edit"
-              >
-                <FiEdit2 className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setSelectedPayment(payment)}
-                className={`
-                  p-2 rounded-md transition-colors
-                  ${isDark ? "text-blue-400 hover:bg-gray-700 hover:text-blue-300" : "text-blue-600 hover:bg-gray-100 hover:text-blue-700"}
-                `}
-                title="View Invoice"
-              >
-                <FiDollarSign className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => handleDeletePayment(payment)} // Added onClick handler
-                className={`
-                  p-2 rounded-md transition-colors
-                  ${isDark ? "text-red-400 hover:bg-gray-700 hover:text-red-300" : "text-red-600 hover:bg-gray-100 hover:text-red-700"}
-                `}
-                title="Delete"
-              >
-                <FiTrash2 className="h-4 w-4" />
-              </button>
-            </div>
-          </td>
-        </tr>
-      ))
-    ) : (
-      <tr>
-        <td
-          colSpan={9} // Corrected to match 9 columns
-          className="p-8 text-center"
-        >
-          <div className="flex flex-col items-center justify-center space-y-2">
-            <FiFile className={`h-12 w-12 ${isDark ? "text-gray-600" : "text-gray-300"}`} />
-            <p className={isDark ? "text-gray-400" : "text-gray-500"}>
-              No payments found. Create your first payment.
-            </p>
-            <button
-              className={`
-                mt-4 px-4 py-2 rounded-md text-sm font-medium transition-colors
-                ${isDark ? "bg-orange-600 hover:bg-orange-700 text-white" : "bg-orange-500 hover:bg-orange-600 text-white"}
-              `}
-              
-            >
-              <FiPlus className="inline mr-2" />
-              New Payment
-            </button>
-          </div>
-        </td>
-      </tr>
-    )}
-  </tbody>
-</table>
-        </div>
+
             {totalPages > 1 && (
               <div
                 className={`flex items-center justify-between p-4 border-t ${
@@ -1352,105 +1196,295 @@ const Payment = () => {
                   <button
                     onClick={handlePrevPage}
                     disabled={currentPage === 1}
-                    className={`p-2 rounded-lg ${
+                    className={`p-2 rounded-full ${
                       currentPage === 1
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                        : isDark
+                        ? "hover:bg-gray-700"
+                        : "hover:bg-orange-100"
                     } ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                    aria-label="Previous page"
                   >
-                    <FiChevronLeft size={20} />
+                    <FiChevronLeft size={18} />
                   </button>
-                  <div className="flex gap-1">
-                    {Array.from(
-                      { length: totalPages },
-                      (_, index) => index + 1
-                    ).map((page) => (
-                      <button
-                        key={page}
-                        onClick={() => handlePageChange(page)}
-                        className={`px-3 py-1 rounded-lg text-sm font-medium ${
-                          currentPage === page
-                            ? isDark
-                              ? "bg-orange-600 text-white"
-                              : "bg-orange-600 text-white"
-                            : isDark
-                            ? "text-gray-300 hover:bg-gray-700"
-                            : "text-gray-600 hover:bg-gray-100"
-                        }`}
-                      >
-                        {page}
-                      </button>
-                    ))}
+                  <div className="flex items-center gap-1">
+                    {(() => {
+                      const maxPagesToShow = 5;
+                      const pages = [];
+                      let startPage = Math.max(
+                        1,
+                        currentPage - Math.floor(maxPagesToShow / 2)
+                      );
+                      let endPage = Math.min(
+                        totalPages,
+                        startPage + maxPagesToShow - 1
+                      );
+
+                      if (endPage - startPage + 1 < maxPagesToShow) {
+                        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+                      }
+
+                      if (startPage > 1) {
+                        pages.push(
+                          <button
+                            key={1}
+                            onClick={() => handlePageChange(1)}
+                            className={`px-3 py-1 rounded-lg text-sm ${
+                              isDark
+                                ? "text-gray-300 hover:bg-gray-700"
+                                : "text-gray-600 hover:bg-orange-100"
+                            }`}
+                          >
+                            1
+                          </button>
+                        );
+                        if (startPage > 2) {
+                          pages.push(
+                            <span
+                              key="start-ellipsis"
+                              className={`px-3 py-1 text-sm ${
+                                isDark ? "text-gray-500" : "text-gray-400"
+                              }`}
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                      }
+
+                      for (let page = startPage; page <= endPage; page++) {
+                        pages.push(
+                          <button
+                            key={page}
+                            onClick={() => handlePageChange(page)}
+                            className={`px-3 py-1 rounded-lg text-sm font-medium ${
+                              currentPage === page
+                                ? isDark
+                                  ? "bg-orange-600 text-white"
+                                  : "bg-orange-600 text-white"
+                                : isDark
+                                ? "text-gray-300 hover:bg-gray-700"
+                                : "text-gray-600 hover:bg-orange-100"
+                            }`}
+                            aria-current={
+                              currentPage === page ? "page" : undefined
+                            }
+                          >
+                            {page}
+                          </button>
+                        );
+                      }
+
+                      if (endPage < totalPages) {
+                        if (endPage < totalPages - 1) {
+                          pages.push(
+                            <span
+                              key="end-ellipsis"
+                              className={`px-3 py-1 text-sm ${
+                                isDark ? "text-gray-500" : "text-gray-400"
+                              }`}
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        pages.push(
+                          <button
+                            key={totalPages}
+                            onClick={() => handlePageChange(totalPages)}
+                            className={`px-3 py-1 rounded-lg text-sm ${
+                              isDark
+                                ? "text-gray-300 hover:bg-gray-700"
+                                : "text-gray-600 hover:bg-orange-100"
+                            }`}
+                          >
+                            {totalPages}
+                          </button>
+                        );
+                      }
+
+                      return pages;
+                    })()}
                   </div>
                   <button
                     onClick={handleNextPage}
                     disabled={currentPage === totalPages}
-                    className={`p-2 rounded-lg ${
+                    className={`p-2 rounded-full ${
                       currentPage === totalPages
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                        : isDark
+                        ? "hover:bg-gray-700"
+                        : "hover:bg-orange-100"
                     } ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                    aria-label="Next page"
                   >
-                    <FiChevronRight size={20} />
+                    <FiChevronRight size={18} />
                   </button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="1"
+                      max={totalPages}
+                      value={currentPage}
+                      onChange={(e) => {
+                        const page = Math.max(
+                          1,
+                          Math.min(totalPages, parseInt(e.target.value) || 1)
+                        );
+                        handlePageChange(page);
+                      }}
+                      className={`w-16 p-1 text-sm border rounded-lg text-center ${
+                        isDark
+                          ? "bg-gray-700 border-gray-600 text-gray-300"
+                          : "bg-white border-gray-300 text-gray-800"
+                      }`}
+                      aria-label="Go to page"
+                    />
+                    <span
+                      className={`text-sm ${
+                        isDark ? "text-gray-500" : "text-gray-400"
+                      }`}
+                    >
+                      of {totalPages}
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div
-              className={`p-4 rounded-lg shadow-sm ${
-                isDark ? "bg-gray-800" : "bg-white"
-              }`}
-            >
-              <h3 className="text-sm font-medium text-gray-500">
-                Total Payments
-              </h3>
-              <p className="text-2xl font-bold mt-1">
-                $
-                {Array.isArray(invoicePatients)
-                  ? invoicePatients
-                      .reduce((sum, p) =>  p.total+sum, 0)
-                      
-                  : "0.00"}
-              </p>
+          {/* Summary Section with Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div
+                className={`p-4 rounded-lg shadow-sm ${
+                  isDark ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h3 className="text-sm font-medium text-gray-500">
+                  Total Payments
+                </h3>
+                <p className="text-2xl font-bold mt-1">
+                  $
+                  {Array.isArray(invoicePatients)
+                    ? invoicePatients.reduce(
+                        (sum, p) => sum + parseFloat(p.total || 0),
+                        0
+                      )
+                    : "0.00"}
+                </p>
+              </div>
+              <div
+                className={`p-4 rounded-lg shadow-sm ${
+                  isDark ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h3 className="text-sm font-medium text-gray-500">
+                  Paid Amount
+                </h3>
+                <p className="text-2xl font-bold mt-1 text-green-600">
+                  $
+                  {Array.isArray(invoicePatients)
+                    ? invoicePatients
+                        .filter((p) => p.status === "paid")
+                        .reduce((sum, p) => sum + parseFloat(p.deposit || 0), 0)
+                    : "0.00"}
+                </p>
+              </div>
+              <div
+                className={`p-4 rounded-lg shadow-sm ${
+                  isDark ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h3 className="text-sm font-medium text-gray-500">
+                  Pending Amount
+                </h3>
+                <p className="text-2xl font-bold mt-1 text-red-600">
+                  $
+                  {Array.isArray(invoicePatients)
+                    ? invoicePatients
+                        .filter((p) => p.status !== "paid")
+                        .reduce(
+                          (sum, p) =>
+                            sum +
+                            (parseFloat(p.total || 0) -
+                              parseFloat(p.deposit || 0)),
+                          0
+                        )
+                    : "0.00"}
+                </p>
+              </div>
+              <div
+                className={`p-4 rounded-lg shadow-sm ${
+                  isDark ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h3 className="text-sm font-medium text-gray-500">
+                  Pending Amount
+                </h3>
+                <p className="text-2xl font-bold mt-1 text-red-600">
+                  $
+                  {Array.isArray(invoicePatients)
+                    ? invoicePatients
+                        .filter((p) => p.status !== "paid")
+                        .reduce(
+                          (sum, p) =>
+                            sum +
+                            (parseFloat(p.total || 0) -
+                              parseFloat(p.deposit || 0)),
+                          0
+                        )
+                    : "0.00"}
+                </p>
+              </div>
             </div>
-            <div
-              className={`p-4 rounded-lg shadow-sm ${
-                isDark ? "bg-gray-800" : "bg-white"
-              }`}
-            >
-              <h3 className="text-sm font-medium text-gray-500">Paid Amount</h3>
-              <p className="text-2xl font-bold mt-1 text-green-600">
-                $
-                {Array.isArray(invoicePatients)
-                  ? invoicePatients
-                      .filter((p) => p.paid)
-                      .reduce((sum, p) => sum + p.total, 0)
-                      
-                  : "0.00"}
-              </p>
-            </div>
-            <div
-              className={`p-4 rounded-lg shadow-sm ${
-                isDark ? "bg-gray-800" : "bg-white"
-              }`}
-            >
-              <h3 className="text-sm font-medium text-gray-500">
-                Pending Amount
-              </h3>
-              <p className="text-2xl font-bold mt-1 text-red-600">
-                $
-                {Array.isArray(invoicePatients)
-                  ? invoicePatients
-                      .filter((p) => !p.paid)
-                      .reduce((sum, p) => sum + (p.total - p.deposit), 0)
-                      
-                  : "0.00"}
-              </p>
-            </div>
+            {Array.isArray(invoicePatients) && invoicePatients.length > 0 && (
+              <div
+                className={`p-4 rounded-lg shadow-sm ${
+                  isDark ? "bg-gray-800" : "bg-white"
+                }`}
+              >
+                <h3 className="text-sm font-medium text-gray-500 mb-2">
+                  Payment Overview
+                </h3>
+                <div className="h-48">
+                  <Doughnut
+                    data={getPaymentSummaryData()}
+                    options={doughnutChartOptions}
+                    aria-label="Payment Summary Doughnut Chart"
+                  />
+                </div>
+              </div>
+            )}
           </div>
+          {Array.isArray(invoicePatients) && invoicePatients.length > 0 ? (
+            <div
+              className={`p-4 mt-3 rounded-lg shadow-sm ${
+                isDark ? "bg-gray-800" : "bg-white"
+              } md:col-span-2`}
+            >
+              <h3 className="text-sm font-medium text-gray-500 mb-2">
+                Unpaid & Pending Trend
+              </h3>
+              <div className="h-48">
+                <Line
+                  data={getUnpaidPendingTrendData()}
+                  options={lineChartOptions}
+                  aria-label="Unpaid and Pending Payment Trend Line Chart"
+                />
+              </div>
+            </div>
+          ) : (
+            <div
+              className={`p-4 rounded-lg shadow-sm ${
+                isDark ? "bg-gray-800" : "bg-white"
+              } md:col-span-2 flex items-center justify-center h-48`}
+            >
+              <p className={isDark ? "text-gray-400" : "text-gray-500"}>
+                No unpaid or pending payments to display.
+              </p>
+            </div>
+          )}
 
           <PaymentModal
             isOpen={isModalOpen}
@@ -1458,7 +1492,6 @@ const Payment = () => {
               setIsModalOpen(false);
               setPaymentToEdit(null);
             }}
-            
             isDark={isDark}
             paymentToEdit={paymentToEdit}
           />

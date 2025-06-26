@@ -1,22 +1,32 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { ThemeContext } from '../colors/Thems';
-import { Bar, Pie, Doughnut } from 'react-chartjs-2';
+import { Line, PolarArea, Doughnut, Bar,Pie } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
-  BarElement,
+  PointElement,
+  LineElement,
   CategoryScale,
   LinearScale,
   ArcElement,
+  PolarAreaController,
+  RadialLinearScale,
+  BarElement,
   Tooltip,
   Legend,
   Title,
 } from 'chart.js';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchReports } from '../stores/reportSlice';
 
 ChartJS.register(
-  BarElement,
+  PointElement,
+  LineElement,
   CategoryScale,
   LinearScale,
   ArcElement,
+  PolarAreaController,
+  RadialLinearScale,
+  BarElement,
   Tooltip,
   Legend,
   Title
@@ -26,6 +36,11 @@ const Report = () => {
   const { isDark } = useContext(ThemeContext);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const dispatch = useDispatch();
+  const {data} = useSelector((state)=>state.report);
+  useEffect(()=>{
+    dispatch(fetchReports());
+  },[dispatch])
 
   // Sample data - in a real app, this would come from an API
   const stats = {
@@ -54,47 +69,40 @@ const Report = () => {
     // In a real app, you would fetch data based on these dates
   };
 
-  // Bar Chart Data - Appointments Status
-  const barData = {
+  // Line Chart Data - Appointments Status
+  const lineData = {
     labels: ['Completed', 'Pending'],
     datasets: [
       {
         label: 'Appointments',
         data: [stats.completed, stats.pending],
-        backgroundColor: [
-          isDark ? '#4ade80' : '#10b981',
-          isDark ? '#facc15' : '#f59e0b'
-        ],
-        borderColor: [
-          isDark ? '#4ade80' : '#10b981',
-          isDark ? '#facc15' : '#f59e0b'
-        ],
-        borderWidth: 1,
-        borderRadius: 8,
-        hoverBackgroundColor: [
-          isDark ? '#86efac' : '#34d399',
-          isDark ? '#fde047' : '#fbbf24'
-        ],
+        backgroundColor: isDark ? '#4ade80' : '#10b981',
+        borderColor: isDark ? '#4ade80' : '#10b981',
+        pointBackgroundColor: isDark ? '#4ade80' : '#10b981',
+        pointBorderColor: isDark ? '#1f2937' : '#fff',
+        pointHoverBackgroundColor: isDark ? '#86efac' : '#34d399',
+        pointHoverBorderColor: isDark ? '#1f2937' : '#fff',
+        borderWidth: 2,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        fill: false,
+        tension: 0.4,
       },
     ],
   };
 
-  // Pie Chart Data - Appointments Distribution
-  const pieData = {
+  // Polar Area Chart Data - Appointments Distribution
+  const polarData = {
     labels: ['Completed', 'Pending'],
     datasets: [
       {
         data: [stats.completed, stats.pending],
         backgroundColor: [
-          isDark ? '#60a5fa' : '#3b82f6',
-          isDark ? '#f87171' : '#ef4444'
+          isDark ? 'rgba(96, 165, 250, 0.7)' : 'rgba(59, 130, 246, 0.7)',
+          isDark ? 'rgba(248, 113, 113, 0.7)' : 'rgba(239, 68, 68, 0.7)',
         ],
         borderColor: isDark ? '#1f2937' : '#fff',
         borderWidth: 2,
-        hoverBackgroundColor: [
-          isDark ? '#93c5fd' : '#60a5fa',
-          isDark ? '#fca5a5' : '#f87171'
-        ],
       },
     ],
   };
@@ -180,7 +188,7 @@ const Report = () => {
     },
   };
 
-  const barOptions = {
+  const lineOptions = {
     ...commonOptions,
     scales: {
       y: {
@@ -203,9 +211,32 @@ const Report = () => {
     },
   };
 
+  const polarOptions = {
+    ...commonOptions,
+    scales: {
+      r: {
+        beginAtZero: true,
+        grid: {
+          color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          color: isDark ? '#9ca3af' : '#6b7280',
+          showLabelBackdrop: false,
+          callback: (value) => value, // Explicitly return tick value to avoid callback error
+        },
+      },
+    },
+    plugins: {
+      ...commonOptions.plugins,
+      legend: {
+        ...commonOptions.plugins.legend,
+        position: 'right',
+      },
+    },
+  };
+
   const pieOptions = {
     ...commonOptions,
-    cutout: '65%',
     plugins: {
       ...commonOptions.plugins,
       legend: {
@@ -300,19 +331,19 @@ const Report = () => {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Appointments Status Bar Chart */}
+        {/* Appointments Status Line Chart */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md`}>
           <h3 className="text-lg font-semibold mb-4">Appointments Status</h3>
           <div className="h-80">
-            <Bar data={barData} options={barOptions} />
+            <Line data={lineData} options={lineOptions} />
           </div>
         </div>
 
-        {/* Appointments Distribution Pie Chart */}
+        {/* Appointments Distribution Polar Area Chart */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md`}>
           <h3 className="text-lg font-semibold mb-4">Appointments Distribution</h3>
           <div className="h-80">
-            <Doughnut data={pieData} options={pieOptions} />
+            <PolarArea data={polarData} options={polarOptions} />
           </div>
         </div>
       </div>

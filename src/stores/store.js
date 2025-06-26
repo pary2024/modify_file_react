@@ -14,6 +14,12 @@ import payReducer from"../stores/paySlice";
 import provinceReducer from"../stores/provinceSlice";
 import schoolReducer from "../stores/schoolSlice";
 import studentReducer from "../stores/studentSlice";
+import companyReducer from "../stores/companySlice";
+import reportReducer from "../stores/reportSlice";
+import dutyDoctorReducer from "../stores/dutyDoctorSlice";
+import labReducer from "../stores/labSlice";
+import materialReducer from "../stores/materialSlice";
+
 const store = configureStore({
   reducer: {
     auth: authReducer, 
@@ -30,6 +36,11 @@ const store = configureStore({
     province:provinceReducer,
     school:schoolReducer,
     student:studentReducer,
+    company:companyReducer,
+    report:reportReducer,
+    duty:dutyDoctorReducer,
+    lab:labReducer,
+    material:materialReducer
   },
 });
 

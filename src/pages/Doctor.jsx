@@ -3,6 +3,8 @@ import { Pencil, Trash2, Plus, Stethoscope, Mail, User, X } from "lucide-react";
 import { ThemeContext } from "../colors/Thems";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
+import { UserPlusIcon } from '@heroicons/react/24/solid'; // or '24/outline'
+import { ToastContainer,  toast } from 'react-toastify';
 import { createDoctor, deleteDoctor, fetchDoctors } from "../stores/doctorSlice";
 import * as XLSX from "xlsx";
 
@@ -16,28 +18,16 @@ const Doctor = () => {
   const [speciatly , setSpeciatly] = useState("");
   const [image , setImage] = useState(null);
   const [status , setStatus] = useState('available');
-  const [alertMessage, setAlertMessage] = useState(null); 
+  
 
   useEffect(() => {
     dispatch(fetchDoctors());
   }, [dispatch]);
   console.log(doctors);
-  useEffect(() => {
-    if (alertMessage) {
-      Swal.fire({
-        icon: alertMessage.type,
-        title: alertMessage.text,
-        showConfirmButton: false,
-        timer: 1500,
-        position: "top-end",
-      });
-      setAlertMessage(null); // clear after showing
-    }
-  }, [alertMessage]);
+ 
   
 
   const [editingId , setEditingId] = useState(null);
-  const [alert, setAlert] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState("table"); // 'table' or 'cards'
   const [isExporting, setIsExporting] = useState(false);
@@ -53,7 +43,7 @@ const Doctor = () => {
     e.preventDefault();
     // Here you would typically dispatch an action to update/add a doctor
     // For now, we'll just show an alert
-    setTimeout(() => setAlert(null), 3000);
+    
     setEditingId(null);
     setIsModalOpen(false);
 
@@ -67,28 +57,14 @@ const Doctor = () => {
     try{
       await dispatch(createDoctor(newDoctor));
       dispatch(fetchDoctors());
-             Swal.fire({
-              icon: "success",
-              title: "Doctore created successfully!",
-              showConfirmButton: false,
-              timer: 1500,
-              position: "top-end",
-            });
-    }catch(e){
-      
-             Swal.fire({
-              icon: "success",
-              title: "doctore is warning!",
-              showConfirmButton: false,
-              timer: 1500,
-              position: "top-end",
-            });
+      toast.success('Doctor created successfully!', { position: "top-right" });
+    }catch(e){  
+      toast.error(`Error creating doctor: ${e.message}`, { position: "top-right" });
+    
     }
   };
 
-  const showAlert = (message) => {
-    setAlert(message);
-  };
+ 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
@@ -181,6 +157,7 @@ const Doctor = () => {
         isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-900"
       }`}
     >
+      <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-3xl font-bold">Doctor Management</h2>
         <div className="flex gap-4">
@@ -234,165 +211,41 @@ const Doctor = () => {
         </div>
       </div>
 
-      {alert && (
-        <div
-          className={`mb-6 p-3 rounded-lg shadow-md w-full max-w-2xl mx-auto flex items-center justify-between ${
-            isDark
-              ? "bg-green-900/80 text-green-100 border border-green-800"
-              : "bg-green-100 text-green-800 border border-green-200"
-          }`}
-        >
-          <span>{alert}</span>
-          <button
-            onClick={() => setAlert(null)}
-            className="text-gray-500 hover:text-gray-300"
-          >
-            <X size={18} />
-          </button>
-        </div>
-      )}
+     
 
       {viewMode === "table" ? (
-        <div
-          className={`rounded-xl shadow-md overflow-hidden ${
-            isDark ? "bg-gray-800" : "bg-white"
-          }`}
-        >
-          <table className="min-w-full">
-            <thead className={`${isDark ? "bg-gray-700" : "bg-gray-100"}`}>
-              <tr>
-                <th className="p-4 text-left">ID</th>
-                <th className="p-4 text-left">Doctor</th>
-                <th className="p-4 text-left">Specialty</th>
-                <th className="p-4 text-left">Contact</th>
-                <th className="p-4 text-left">Status</th>
-                <th className="p-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {doctors?.map((doc) => (
-                <tr
-                  key={doc.id}
-                  className={`border-t ${
-                    isDark
-                      ? "border-gray-700 hover:bg-gray-700/50"
-                      : "border-gray-100 hover:bg-gray-50"
-                  }`}
-                >
-                  <td className="p-4">{doc.id}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={
-                          doc.image ||
-                          `https://randomuser.me/api/portraits/${
-                            Math.random() > 0.5 ? "men" : "women"
-                          }/${Math.floor(Math.random() * 100)}.jpg`
-                        }
-                        alt={doc.name}
-                        className="w-10 h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <div className="font-medium">{doc.name}</div>
-                        <div
-                          className={`text-sm ${
-                            isDark ? "text-gray-400" : "text-gray-500"
-                          }`}
-                        >
-                          Joined:{" "}
-                          {doc.joinedDate
-                            ? new Date(doc.joinedDate).toLocaleDateString()
-                            : "N/A"}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <Stethoscope
-                        size={16}
-                        className={isDark ? "text-blue-400" : "text-blue-600"}
-                      />
-                      {doc.speciatly}
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <Mail
-                          size={16}
-                          className={isDark ? "text-gray-400" : "text-gray-500"}
-                        />
-                        <span className="text-sm">{doc.email}</span>
-                      </div>
-                     
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${
-                        doc.status === "Available"
-                          ? isDark
-                            ? "bg-green-900/50 text-green-300"
-                            : "bg-green-100 text-green-800"
-                          : isDark
-                          ? "bg-red-900/50 text-red-300"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {doc.status || "Available"}
-                    </span>
-                  </td>
-                  <td className="p-4">
-                    <div className="flex justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(doc)}
-                        className={`p-2 rounded-lg ${
-                          isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                        }`}
-                        title="Edit"
-                      >
-                        <Pencil
-                          size={18}
-                          className={isDark ? "text-blue-400" : "text-blue-600"}
-                        />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(doc.id)}
-                        className={`p-2 rounded-lg ${
-                          isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                        }`}
-                        title="Delete"
-                      >
-                        <Trash2
-                          size={18}
-                          className={isDark ? "text-red-400" : "text-red-600"}
-                        />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {doctors.map((doc) => (
-            <div
-              key={doc.id}
-              className={`rounded-xl shadow-md overflow-hidden transition-transform hover:scale-[1.02] ${
-                isDark ? "bg-gray-800" : "bg-white"
-              }`}
-            >
-              <div
-                className={`p-1 ${
-                  doc.status === "Available" ? "bg-green-500" : "bg-red-500"
-                }`}
-              ></div>
-              <div className="p-6">
-                <div className="flex flex-col items-center mb-4">
+  <div className={`rounded-xl overflow-hidden shadow-sm ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"} border`}>
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className={isDark ? "bg-teal-900/30" : "bg-teal-50"}>
+        <tr>
+          <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+            Doctor
+          </th>
+          <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+            Specialty
+          </th>
+          <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+            Contact
+          </th>
+          <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+            Status
+          </th>
+          <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">
+            Actions
+          </th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+        {doctors?.map((doc) => (
+          <tr
+            key={doc.id}
+            className={`transition-colors ${isDark ? "hover:bg-gray-700/50" : "hover:bg-teal-50/30"}`}
+          >
+            <td className="px-6 py-4 whitespace-nowrap">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 h-10 w-10">
                   <img
+                    className="h-10 w-10 rounded-full object-cover border-2 border-white shadow"
                     src={
                       doc.image ||
                       `https://randomuser.me/api/portraits/${
@@ -400,32 +253,119 @@ const Doctor = () => {
                       }/${Math.floor(Math.random() * 100)}.jpg`
                     }
                     alt={doc.name}
-                    className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-md"
                   />
-                  <h3 className="mt-4 text-xl font-bold text-center">
+                </div>
+                <div className="ml-4">
+                  <div className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                     {doc.name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1 text-blue-500">
-                    <Stethoscope size={16} />
-                    <span>{doc.speciatly}</span>
+                  </div>
+                  <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    ID: {doc.id}
                   </div>
                 </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center gap-3">
-                    <Mail
-                      size={16}
-                      className={isDark ? "text-gray-400" : "text-gray-500"}
-                    />
-                    <span className="text-sm">{doc.email}</span>
+              </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <div className="flex items-center">
+                <div className={`p-2 rounded-full ${isDark ? "bg-teal-900/20 text-teal-300" : "bg-teal-100 text-teal-800"}`}>
+                  <Stethoscope size={16} />
+                </div>
+                <div className="ml-3">
+                  <div className={`text-sm font-medium ${isDark ? "text-gray-100" : "text-gray-800"}`}>
+                    {doc.speciatly}
                   </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <User
-                      size={16}
-                      className={isDark ? "text-gray-400" : "text-gray-500"}
+                </div>
+              </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <div className="flex items-center gap-2">
+                <Mail size={16} className={isDark ? "text-gray-400" : "text-gray-500"} />
+                <span className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                  {doc.email}
+                </span>
+              </div>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap">
+              <span
+                className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                  doc.status === "Available"
+                    ? isDark
+                      ? "bg-green-900/30 text-green-300"
+                      : "bg-green-100 text-green-800"
+                    : isDark
+                    ? "bg-amber-900/30 text-amber-300"
+                    : "bg-amber-100 text-amber-800"
+                }`}
+              >
+                {doc.status || "Available"}
+              </span>
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => handleEdit(doc)}
+                  className={`p-2 rounded-lg transition-colors ${isDark ? "text-teal-400 hover:bg-gray-700" : "text-teal-600 hover:bg-gray-100"}`}
+                  title="Edit"
+                >
+                  <Pencil size={18} />
+                </button>
+                <button
+                  onClick={() => handleDelete(doc.id)}
+                  className={`p-2 rounded-lg transition-colors ${isDark ? "text-red-400 hover:bg-gray-700" : "text-red-600 hover:bg-gray-100"}`}
+                  title="Delete"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {doctors.map((doc) => (
+            <div
+              key={doc.id}
+              className={`rounded-xl shadow-md overflow-hidden transition-all hover:shadow-lg ${isDark ? "bg-gray-800" : "bg-white"} border ${isDark ? "border-gray-700" : "border-gray-200"}`}
+            >
+              <div
+                className={`h-2 ${doc.status === "Available" ? "bg-teal-500" : "bg-amber-500"}`}
+              ></div>
+              <div className="p-6">
+                <div className="flex flex-col items-center">
+                  <div className="relative mb-4">
+                    <img
+                      className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+                      src={
+                        doc.image ||
+                        `https://randomuser.me/api/portraits/${
+                          Math.random() > 0.5 ? "men" : "women"
+                        }/${Math.floor(Math.random() * 100)}.jpg`
+                      }
+                      alt={doc.name}
                     />
-                    <span className="text-sm">
+                    <div className={`absolute -bottom-2 -right-2 p-2 rounded-full ${isDark ? "bg-teal-800" : "bg-teal-100"}`}>
+                      <Stethoscope size={16} className={isDark ? "text-teal-300" : "text-teal-600"} />
+                    </div>
+                  </div>
+                  <h3 className={`text-xl font-bold text-center ${isDark ? "text-white" : "text-gray-900"}`}>
+                    {doc.name}
+                  </h3>
+                  <p className={`mt-1 text-sm ${isDark ? "text-teal-300" : "text-teal-600"}`}>
+                    {doc.speciatly}
+                  </p>
+                </div>
+
+                <div className={`mt-6 space-y-3 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                  <div className="flex items-center gap-3">
+                    <Mail size={16} className="flex-shrink-0" />
+                    <span className="truncate">{doc.email}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Calendar size={16} className="flex-shrink-0" />
+                    <span>
                       Joined:{" "}
                       {doc.joinedDate
                         ? new Date(doc.joinedDate).toLocaleDateString()
@@ -434,16 +374,16 @@ const Doctor = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
                       doc.status === "Available"
                         ? isDark
-                          ? "bg-green-900/50 text-green-300"
-                          : "bg-green-100 text-green-800"
+                          ? "bg-teal-900/30 text-teal-300"
+                          : "bg-teal-100 text-teal-800"
                         : isDark
-                        ? "bg-red-900/50 text-red-300"
-                        : "bg-red-100 text-red-800"
+                        ? "bg-amber-900/30 text-amber-300"
+                        : "bg-amber-100 text-amber-800"
                     }`}
                   >
                     {doc.status || "Available"}
@@ -451,27 +391,17 @@ const Doctor = () => {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(doc)}
-                      className={`p-2 rounded-lg ${
-                        isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${isDark ? "text-teal-400 hover:bg-gray-700" : "text-teal-600 hover:bg-gray-100"}`}
                       title="Edit"
                     >
-                      <Pencil
-                        size={18}
-                        className={isDark ? "text-blue-400" : "text-blue-600"}
-                      />
+                      <Pencil size={18} />
                     </button>
                     <button
                       onClick={() => handleDelete(doc.id)}
-                      className={`p-2 rounded-lg ${
-                        isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                      }`}
+                      className={`p-2 rounded-lg transition-colors ${isDark ? "text-red-400 hover:bg-gray-700" : "text-red-600 hover:bg-gray-100"}`}
                       title="Delete"
                     >
-                      <Trash2
-                        size={18}
-                        className={isDark ? "text-red-400" : "text-red-600"}
-                      />
+                      <Trash2 size={18} />
                     </button>
                   </div>
                 </div>
@@ -483,168 +413,199 @@ const Doctor = () => {
 
       {/* Add/Edit Doctor Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div
-            ref={modalRef}
-            className={`rounded-xl shadow-2xl w-full max-w-md ${
-              isDark ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"
-            }`}
+  <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" data-aos="fade-down">
+    <div
+      ref={modalRef}
+      className={`rounded-xl shadow-2xl w-full max-w-2xl ${
+        isDark ? "bg-gray-800 text-gray-100" : "bg-white text-gray-900"
+      }`}
+    >
+      <div
+        className={`p-5 border-b ${
+          isDark ? "border-gray-700 bg-gray-900" : "border-gray-200 bg-teal-50"
+        } rounded-t-xl`}
+      >
+        <div className="flex justify-between items-center">
+          <h3 className="text-xl font-bold flex items-center gap-2">
+            {editingId ? (
+              <>
+                <PencilSquareIcon className="w-5 h-5 text-teal-500" />
+                <span className={isDark ? "text-teal-400" : "text-teal-700"}>Edit Doctor Profile</span>
+              </>
+            ) : (
+              <>
+                <UserPlusIcon className="w-5 h-5 text-teal-500" />
+                <span className={isDark ? "text-teal-400" : "text-teal-700"}>Register New Doctor</span>
+              </>
+            )}
+          </h3>
+          <button
+            onClick={closeModal}
+            className={`p-1 rounded-full ${
+              isDark ? "hover:bg-gray-700 text-gray-300" : "hover:bg-gray-100 text-gray-500"
+            } transition-colors`}
+            aria-label="Close modal"
           >
-            <div
-              className={`p-4 border-b ${
-                isDark ? "border-gray-700" : "border-gray-200"
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+      <form onSubmit={handleSubmit} className="p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Name Field */}
+          <div className="space-y-2">
+            <label
+              className={`block text-sm font-medium ${
+                isDark ? "text-teal-300" : "text-teal-700"
               }`}
             >
-              <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold">
-                  {editingId ? "Edit Doctor" : "Add New Doctor"}
-                </h3>
-                <button
-                  onClick={closeModal}
-                  className={`p-1 rounded-full ${
-                    isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                  }`}
-                >
-                  <X size={20} />
-                </button>
-              </div>
+              Full Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="name"
+              value={name}
+              onChange={(e)=>setName(e.target.value)}
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-opacity-50 ${
+                isDark
+                  ? "bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              }`}
+              required
+              autoFocus
+            />
+          </div>
+
+          {/* Specialty Field */}
+          <div className="space-y-2">
+            <label
+              className={`block text-sm font-medium ${
+                isDark ? "text-teal-300" : "text-teal-700"
+              }`}
+            >
+              Specialty <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="speciatly"
+              value={speciatly}
+              onChange={(e)=>setSpeciatly(e.target.value)}
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-opacity-50 ${
+                isDark
+                  ? "bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              }`}
+              required
+              placeholder="e.g. Orthodontist"
+            />
+          </div>
+
+          {/* Status Field */}
+          <div className="space-y-2">
+            <label
+              className={`block text-sm font-medium ${
+                isDark ? "text-teal-300" : "text-teal-700"
+              }`}
+            >
+              Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              name="status"
+              value={status}
+              onChange={(e)=>setStatus(e.target.value)}
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-opacity-50 ${
+                isDark
+                  ? "bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              }`}
+            >
+              <option value="Available">Available</option>
+              <option value="On Leave">On Leave</option>
+            </select>
+          </div>
+
+          {/* Email Field */}
+          <div className="space-y-2">
+            <label
+              className={`block text-sm font-medium ${
+                isDark ? "text-teal-300" : "text-teal-700"
+              }`}
+            >
+              Email <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={email}
+              onChange={(e)=>setEmail(e.target.value)}
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 focus:ring-opacity-50 ${
+                isDark
+                  ? "bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              }`}
+              required
+              placeholder="doctor@clinic.com"
+            />
+          </div>
+
+          {/* Image Field */}
+          <div className="space-y-2 md:col-span-2">
+            <label
+              className={`block text-sm font-medium ${
+                isDark ? "text-teal-300" : "text-teal-700"
+              }`}
+            >
+              Profile Photo
+            </label>
+            <div className={`p-3 rounded-lg border-dashed border-2 ${
+              isDark ? "border-gray-600 bg-gray-700" : "border-gray-300 bg-gray-50"
+            }`}>
+              <input
+                type="file"
+                name="image"
+                onChange={handleImageChange}
+                className={`w-full text-sm ${
+                  isDark ? "text-gray-300" : "text-gray-600"
+                } file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 ${
+                  isDark 
+                    ? "file:bg-teal-600 file:hover:bg-teal-700 file:text-white"
+                    : "file:bg-teal-500 file:hover:bg-teal-600 file:text-white"
+                } file:cursor-pointer`}
+              />
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label
-                  className={`block mb-1 text-sm font-medium ${
-                    isDark ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Full Name
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={name}
-                  onChange={(e)=>setName(e.target.value)}
-                  className={`w-full p-3 rounded-lg border ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 focus:border-blue-500"
-                      : "bg-white border-gray-300 focus:border-blue-500"
-                  }`}
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    className={`block mb-1 text-sm font-medium ${
-                      isDark ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    Speciatly
-                  </label>
-                  <input
-                    type="text"
-                    name="speciatly"
-                    value={speciatly}
-                    onChange={(e)=>setSpeciatly(e.target.value)}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:border-blue-500"
-                    }`}
-                    required
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`block mb-1 text-sm font-medium ${
-                      isDark ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={status}
-                    onChange={(e)=>setStatus(e.target.value)}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:border-blue-500"
-                    }`}
-                  >
-                    <option value="Available">Available</option>
-                    <option value="On Leave">On Leave</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label
-                  className={`block mb-1 text-sm font-medium ${
-                    isDark ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Email
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={email}
-                  onChange={(e)=>setEmail(e.target.value)}
-                  className={`w-full p-3 rounded-lg border ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 focus:border-blue-500"
-                      : "bg-white border-gray-300 focus:border-blue-500"
-                  }`}
-                  required
-                />
-              </div>
-
-
-              <div>
-                <label
-                  className={`block mb-1 text-sm font-medium ${
-                    isDark ? "text-gray-300" : "text-gray-700"
-                  }`}
-                >
-                  Profile Image URL (optional)
-                </label>
-                <input
-                  type="file"
-                  name="image"
-                  onChange={handleImageChange}
-                  placeholder="Leave blank for random image"
-                  className={`w-full p-3 rounded-lg border ${
-                    isDark
-                      ? "bg-gray-700 border-gray-600 focus:border-blue-500"
-                      : "bg-white border-gray-300 focus:border-blue-500"
-                  }`}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
-                >
-                  {editingId ? "Update Doctor" : "Add Doctor"}
-                </button>
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className={`flex-1 py-3 rounded-lg font-medium transition-colors ${
-                    isDark
-                      ? "bg-gray-700 hover:bg-gray-600 text-white"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              JPG, PNG or WEBP (Max 2MB). Leave blank for default avatar.
+            </p>
           </div>
         </div>
-      )}
+
+        <div className="mt-8 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={closeModal}
+            className={`px-5 py-2.5 rounded-lg font-medium text-sm ${
+              isDark
+                ? "border border-gray-600 text-gray-200 hover:bg-gray-700"
+                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+            } transition-colors`}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className={`px-5 py-2.5 rounded-lg font-semibold text-sm ${
+              isDark 
+                ? "bg-teal-600 hover:bg-teal-700 text-white"
+                : "bg-teal-500 hover:bg-teal-600 text-white"
+            } transition-colors shadow-md`}
+          >
+            {editingId ? "Update Doctor" : "Register Doctor"}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 };

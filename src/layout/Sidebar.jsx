@@ -1,5 +1,5 @@
 // src/layout/Sidebar.jsx
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import {
   FaUserMd,
   FaBriefcaseMedical,
@@ -18,10 +18,10 @@ import {
   MdSms,
   MdSettings,
   MdLogout,
-   MdSchool, MdMap, MdHealing
+   MdSchool, MdMap, MdHealing,MdBusiness
 } from "react-icons/md";
 import { Outlet, Link, useLocation } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../stores/authSlice";
 import { ThemeContext } from "../colors/Thems"; // Adjust path as needed
 import {
@@ -30,6 +30,7 @@ import {
   IoNotificationsOutline,
 } from "react-icons/io5";
 import { RiMedicineBottleLine } from "react-icons/ri";
+import { fetchCompanies } from "../stores/companySlice";
 
 const Sidebar = () => {
   const { isDark, toggleTheme } = useContext(ThemeContext);
@@ -37,42 +38,69 @@ const Sidebar = () => {
   const [showAppointmentDropdown, setShowAppointmentDropdown] = useState(false);
   const location = useLocation();
   const dispatch = useDispatch();
-  const userRole = localStorage.getItem("role") || "user"; // Fallback to "user" if role is not set
+  const userRole = localStorage.getItem("roles") || "user"; 
+  const {companies} = useSelector((state)=>state.company);
+  useEffect(()=>{
+    dispatch(fetchCompanies())
+  },[dispatch]);
+   
+
+  const imageCompany = localStorage.getItem("companyImage");
+  const companyName = localStorage.getItem("company");
+
+
+  
+  
 
   const menuItems = [
     { label: "Dashboard", icon: <MdDashboard />, href: "/admin" },
-    { label: "Departments", icon: <MdApartment />, href: "/admin/department" },
+    // { label: "Departments", icon: <MdApartment />, href: "/admin/department" },
     { label: "Patient", icon: <MdPerson />, href: "/admin/list" },
-    { label: "Student", icon: <FaUserGraduate />, href: "/admin/student" },
-    { label: "Human Resources", icon: <MdPeopleAlt />, href: "/admin/human" },
-    {
-      label: "Financial Activities",
-      icon: <MdAttachMoney />,
-      href: "/admin/finance",
-    },
-    {
-      label: "Prescription",
-      icon: <FaBriefcaseMedical />,
-      href: "/prescription",
-    },
+    // { label: "Student", icon: <FaUserGraduate />, href: "/admin/student" },
+    // { label: "Human Resources", icon: <MdPeopleAlt />, href: "/admin/human" },
+    // {
+    //   label: "Financial Activities",
+    //   icon: <MdAttachMoney />,
+    //   href: "/admin/finance",
+    // },
     { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
-    { label: "SMS", icon: <MdSms />, href: "/admin/sms" },
+    // { label: "SMS", icon: <MdSms />, href: "/admin/sms" },
     { label: "Method", icon: <MdSms />, href: "/admin/method" },
+    { label: "Metarial", icon: <MdSms />, href: "/admin/material" },
+    { label: "Lab", icon: <MdSms />, href: "/admin/lab" },
+    { label: "Duty", icon: <MdSms />, href: "/admin/dutyDoctor" },
 
     // Admin-only routes
-    ...(userRole === "admin"
-      ? [
-          {
-            label: "User",
-            icon: <RiMedicineBottleLine />,
-            href: "/admin/user",
-          },
-          { label: "Doctor", icon: <FaUserMd />, href: "/admin/doctor" },
-           { label: "School", icon: <MdSchool />, href: "/admin/school" },
-            { label: "Province", icon: <MdMap />, href: "/admin/province" },
-            { label: "Treatment", icon: <MdHealing />, href: "/admin/treat" },
-        ]
-      : []),
+    {
+      label: "User",
+      icon: <RiMedicineBottleLine />,
+      href: "/admin/user",
+    },
+    {
+      label: "Doctor",
+      icon: <FaUserMd />,
+      href: "/admin/doctor",
+    },
+    // {
+    //   label: "School",
+    //   icon: <MdSchool />,
+    //   href: "/admin/school",
+    // },
+    {
+      label: "Province",
+      icon: <MdMap />,
+      href: "/admin/province",
+    },
+    {
+      label: "Treatment",
+      icon: <MdHealing />,
+      href: "/admin/treat",
+    },
+    {
+      label: "Company",
+      icon: <MdBusiness />,
+      href: "/admin/company",
+    },
   ];
 
   const isActive = (path) => {
@@ -100,14 +128,14 @@ const Sidebar = () => {
         <div className="flex flex-col items-center mb-8 pt-4">
           <div className="bg-white p-2 rounded-full shadow-lg mb-3">
             <img
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWWbQToNUShJSUfC14XOM3QXCJf4BalOfIRQ&s"
-              alt="Dentist Logo"
-              className="w-16 h-16 object-contain"
+              src={imageCompany || "/default-logo.png"}
+              alt="Company Logo"
+              className="w-[100px] h-[100px] rounded-full  object-contain"
             />
           </div>
           <h1 className="text-2xl font-bold text-center">
-            <span className="text-blue-300">SBC</span>{" "}
-            <span className="text-white">SOLUTION</span>
+            <span className="text-blue-300">{companyName}</span>{' '}
+           
           </h1>
           <p className="text-xs text-blue-200 mt-1">Healthcare Management</p>
         </div>
@@ -160,18 +188,7 @@ const Sidebar = () => {
                     <span className="text-sm">Patient Appointments</span>
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    to="/admin/appoint/student"
-                    className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
-                      isActive("/admin/appoint/student")
-                        ? "bg-blue-500 shadow"
-                        : "hover:bg-blue-600 hover:shadow"
-                    }`}
-                  >
-                    <span className="text-sm">Student Appointments</span>
-                  </Link>
-                </li>
+               
               </ul>
             )}
           </li>
@@ -203,21 +220,10 @@ const Sidebar = () => {
                         : "hover:bg-blue-600 hover:shadow"
                     }`}
                   >
-                    <span className="text-sm">Patient Payments</span>
+                    <span className="text-sm">Reception</span>
                   </Link>
                 </li>
-                <li>
-                  <Link
-                    to="/admin/payment/student"
-                    className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
-                      isActive("/admin/payment/student")
-                        ? "bg-blue-500 shadow"
-                        : "hover:bg-blue-600 hover:shadow"
-                    }`}
-                  >
-                    <span className="text-sm">Student Payments</span>
-                  </Link>
-                </li>
+               
               </ul>
             )}
           </li>

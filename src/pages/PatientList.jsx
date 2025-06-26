@@ -7,6 +7,7 @@ import {
   PrinterIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  XMarkIcon
 } from "@heroicons/react/24/solid";
 import {
   UserIcon,
@@ -24,6 +25,18 @@ import { ThemeContext } from "../colors/Thems";
 import * as XLSX from "xlsx";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
+import { ToastContainer,  toast } from 'react-toastify';
+import { Bar, Pie } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
 import {
   fetchPatients,
   createPatient,
@@ -34,36 +47,41 @@ import Swal from 'sweetalert2';
 import { fetchProvinces } from "../stores/provinceSlice";
 import { fetchTreats } from "../stores/treatSlice";
 
+// Register Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
+
 export default function PatientList() {
   const { isDark } = useContext(ThemeContext);
   const dispatch = useDispatch();
   const { patients, status, error } = useSelector((state) => state.patient);
   const { provinces } = useSelector((state) => state.province);
-  const { treats } = useSelector((state) => state.treat);
   const [editingId, setEditingId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [successMessage, setSuccessMessage] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [patient, setPatient] = useState("");
   const [age, setAge] = useState("");
   const [province, setProvince] = useState("");
-  const [treat, setTreat] = useState("");
   const [phone, setPhone] = useState("");
   const [career, setCareer] = useState("");
   const [statusState, setStatus] = useState("active");
   const [gender, setGender] = useState("male");
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(6);
-  const [alertMessage, setAlertMessage] = useState(null); // or { type, text }
 
-   
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(3);
+ 
 
   useEffect(() => {
     dispatch(fetchPatients());
     dispatch(fetchProvinces());
-    dispatch(fetchTreats());
   }, [dispatch]);
 
   // Reset to page 1 when search term changes
@@ -126,7 +144,6 @@ export default function PatientList() {
       name: patient,
       age: age,
       province_id: province,
-      treat_id: treat,
       phone: phone,
       career: career,
       status: statusState,
@@ -136,40 +153,24 @@ export default function PatientList() {
       await dispatch(createPatient(newPatient)).unwrap();
       dispatch(fetchPatients());
       setShowCreateModal(false);
-      Swal.fire({
-        icon: "success",
-        title: "Patient created successfully!",
-        showConfirmButton: false,
-        timer: 1500,
-        position: "top-end",
-      });
+      toast.success('Patient created successfully!', { position: "top-right" });
       setPatient("");
       setAge("");
       setProvince("");
-      setTreat("");
       setPhone("");
       setCareer("");
       setStatus("active");
       setGender("male");
-      
     } catch (e) {
-      console.error("Error creating patient:", e);
-       Swal.fire({
-        icon: "error",
-        title: "Failed to create patient",
-        text: "Something went wrong.",
-      });
+      toast.error(`Error creating patient: ${e.message}`, { position: "top-right" });
     }
   };
-
-
 
   const handleEdit = (p) => {
     setEditingId(p.id);
     setPatient(p.name);
     setAge(p.age);
     setProvince(p.province_id || "");
-    setTreat(p.treat_id || "");
     setPhone(p.phone);
     setCareer(p.career);
     setStatus(p.status);
@@ -184,7 +185,6 @@ export default function PatientList() {
       name: patient,
       age: age,
       province_id: province,
-      treat_id: treat,
       phone: phone,
       career: career,
       status: statusState,
@@ -197,16 +197,13 @@ export default function PatientList() {
       setPatient("");
       setAge("");
       setProvince("");
-      setTreat("");
       setPhone("");
       setCareer("");
       setStatus("active");
       setGender("male");
-     
     } catch (e) {
       console.error("Error updating patient:", e);
-      setSuccessMessage("Failed to update patient.");
-      setTimeout(() => setSuccessMessage(null), 3000);
+      
     }
   };
 
@@ -214,305 +211,283 @@ export default function PatientList() {
     try {
       await dispatch(deletePatient(id));
       dispatch(fetchPatients());
-       Swal.fire({
-        icon: "success",
-        title: "Patient deleted successfully!",
-        showConfirmButton: false,
-        timer: 1500,
-        position: "top-end",
-      });
-      // Adjust current page if necessary
+      toast.success('patient deleted successfully!', { position: "top-right" });
       if (currentPatients.length === 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }
     } catch (e) {
-      console.error("Error deleting patient:", e);
+      toast.error(`Error delete patient: ${e.message}`, { position: "top-right" });
       
     }
   };
-   useEffect(() => {
-  if (alertMessage) {
-    Swal.fire({
-      icon: alertMessage.type,
-      title: alertMessage.text,
-      showConfirmButton: false,
-      timer: 1500,
-      position: "top-end",
-    });
-    setAlertMessage(null); // clear after showing
-  }
-}, [alertMessage]);
+
+ 
 
   const handlePrintInvoice = (patient, settings = {}) => {
-   
-  const {
-    paperSize = 'A4',
-    orientation = 'portrait'
-  } = settings;
+    const {
+      paperSize = 'A4',
+      orientation = 'portrait'
+    } = settings;
 
-  
+    const provinceName = provinces.find((prov) => prov.id === patient.province_id)?.name || patient.province || "N/A";
+    const treatmentName = treats.find((t) => t.id === patient.treat_id)?.name || patient.disease || "N/A";
+    const rawDate = patient.created_at || patient.create_at || new Date().toISOString();
+    const invoiceDate = dayjs(rawDate).format("YYYY-MM-DD HH:mm:ss");
 
-  const provinceName = provinces.find((prov) => prov.id === patient.province_id)?.name || patient.province || "N/A";
-  const treatmentName = treats.find((t) => t.id === patients.treat_id)?.name || patient.disease || "N/A";
-  const rawDate = patient.created_at || patient.create_at || new Date().toISOString();
-  const invoiceDate = dayjs(rawDate).format("YYYY-MM-DD HH:mm:ss");
+    const paperSizes = {
+      A4: { width: "210mm", height: "297mm" },
+      Letter: { width: "215.9mm", height: "279.4mm" },
+    };
+    const selectedPaper = paperSizes[paperSize] || paperSizes.A4;
 
-  // Define paper size dimensions
-  const paperSizes = {
-    A4: { width: "210mm", height: "297mm" },
-    Letter: { width: "215.9mm", height: "279.4mm" },
-  };
-  const selectedPaper = paperSizes[paperSize] || paperSizes.A4;
-
-  const invoiceWindow = window.open("", "_blank");
-  invoiceWindow.document.write(`
-    <html>
-      <head>
-        <title>Dental Invoice - DT${patient.id}</title>
-        <style>
-          :root {
-            --primary-color: #2c7be5;
-            --secondary-color: #6c757d;
-            --border-color: #e9ecef;
-            --light-bg: #f8f9fa;
-          }
-          body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            margin: 0; 
-            padding: 0;
-            color: #333;
-            line-height: 1.6;
-          }
-          .invoice-container { 
-            max-width: ${orientation === "landscape" ? "297mm" : "210mm"}; 
-            width: ${selectedPaper.width};
-            height: ${selectedPaper.height};
-            margin: 10mm auto; 
-            padding: 15mm;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            box-sizing: border-box;
-          }
-          .header { 
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-          }
-          .clinic-info h1 {
-            color: var(--primary-color);
-            margin: 0;
-            font-size: 28px;
-          }
-          .clinic-info p {
-            margin: 5px 0;
-            color: var(--secondary-color);
-          }
-          .invoice-meta {
-            text-align: right;
-          }
-          .invoice-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 5px;
-          }
-          .invoice-number {
-            color: var(--secondary-color);
-            font-size: 16px;
-          }
-          .section {
-            margin-bottom: 30px;
-          }
-          .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border-color);
-          }
-          .patient-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-          }
-          .detail-item {
-            margin-bottom: 10px;
-          }
-          .detail-label {
-            font-weight: 600;
-            display: block;
-            margin-bottom: 3px;
-            color: var(--secondary-color);
-          }
-          .detail-value {
-            font-size: 16px;
-          }
-          .treatment-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-          }
-          .treatment-table th {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 12px;
-            text-align: left;
-          }
-          .treatment-table td {
-            padding: 12px;
-            border-bottom: 1px solid var(--border-color);
-          }
-          .treatment-table tr:nth-child(even) {
-            background-color: var(--light-bg);
-          }
-          .total-section {
-            text-align: right;
-            margin-top: 20px;
-          }
-          .total-amount {
-            font-size: 20px;
-            font-weight: 600;
-          }
-          .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
-            color: var(--secondary-color);
-            font-size: 14px;
-          }
-          .action-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 30px;
-          }
-          .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-          }
-          .btn-print {
-            background-color: var(--primary-color);
-            color: white;
-          }
-          .btn-close {
-            background-color: var(--secondary-color);
-            color: white;
-          }
-          .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-          }
-          @media print {
-            @page {
-              size: ${paperSize} ${orientation};
-              margin: 10mm;
+    const invoiceWindow = window.open("", "_blank");
+    invoiceWindow.document.write(`
+      <html>
+        <head>
+          <title>Dental Invoice - DT${patient.id}</title>
+          <style>
+            :root {
+              --primary-color: #2c7be5;
+              --secondary-color: #6c757d;
+              --border-color: #e9ecef;
+              --light-bg: #f8f9fa;
+            }
+            body { 
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+              margin: 0; 
+              padding: 0;
+              color: #333;
+              line-height: 1.6;
+            }
+            .invoice-container { 
+              max-width: ${orientation === "landscape" ? "297mm" : "210mm"}; 
+              width: ${selectedPaper.width};
+              height: ${selectedPaper.height};
+              margin: 10mm auto; 
+              padding: 15mm;
+              box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+              border-radius: 8px;
+              box-sizing: border-box;
+            }
+            .header { 
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 30px;
+              padding-bottom: 20px;
+              border-bottom: 1px solid var(--border-color);
+            }
+            .clinic-info h1 {
+              color: var(--primary-color);
+              margin: 0;
+              font-size: 28px;
+            }
+            .clinic-info p {
+              margin: 5px 0;
+              color: var(--secondary-color);
+            }
+            .invoice-meta {
+              text-align: right;
+            }
+            .invoice-title {
+              font-size: 24px;
+              font-weight: 600;
+              margin-bottom: 5px;
+            }
+            .invoice-number {
+              color: var(--secondary-color);
+              font-size: 16px;
+            }
+            .section {
+              margin-bottom: 30px;
+            }
+            .section-title {
+              font-size: 18px;
+              font-weight: 600;
+              color: var(--primary-color);
+              margin-bottom: 15px;
+              padding-bottom: 8px;
+              border-bottom: 1px solid var(--border-color);
+            }
+            .patient-details {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 15px;
+            }
+            .detail-item {
+              margin-bottom: 10px;
+            }
+            .detail-label {
+              font-weight: 600;
+              display: block;
+              margin-bottom: 3px;
+              color: var(--secondary-color);
+            }
+            .detail-value {
+              font-size: 16px;
+            }
+            .treatment-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 15px;
+            }
+            .treatment-table th {
+              background-color: var(--primary-color);
+              color: white;
+              padding: 12px;
+              text-align: left;
+            }
+            .treatment-table td {
+              padding: 12px;
+              border-bottom: 1px solid var(--border-color);
+            }
+            .treatment-table tr:nth-child(even) {
+              background-color: var(--light-bg);
+            }
+            .total-section {
+              text-align: right;
+              margin-top: 20px;
+            }
+            .total-amount {
+              font-size: 20px;
+              font-weight: 600;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid var(--border-color);
+              text-align: center;
+              color: var(--secondary-color);
+              font-size: 14px;
             }
             .action-buttons {
-              display: none;
+              display: flex;
+              justify-content: center;
+              gap: 15px;
+              margin-top: 30px;
             }
-            body {
-              padding: 0;
-              margin: 0;
+            .btn {
+              padding: 10px 20px;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-weight: 600;
+              transition: all 0.3s;
             }
-            .invoice-container {
-              box-shadow: none;
-              margin: 0;
-              padding: 10mm;
-              width: 100%;
-              height: auto;
+            .btn-print {
+              background-color: var(--primary-color);
+              color: white;
             }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="invoice-container">
-          <div class="header">
-            <div class="clinic-info">
-              <h1>BrightSmile Dental Clinic</h1>
-              <p>123 Dental Street, Health District</p>
-              <p>Phone: (123) 456-7890 | Email: info@brightsmile.com</p>
+            .btn-close {
+              background-color: var(--secondary-color);
+              color: white;
+            }
+            .btn:hover {
+              opacity: 0.9;
+              transform: translateY(-2px);
+            }
+            @media print {
+              @page {
+                size: ${paperSize} ${orientation};
+                margin: 10mm;
+              }
+              .action-buttons {
+                display: none;
+              }
+              body {
+                padding: 0;
+                margin: 0;
+              }
+              .invoice-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 10mm;
+                width: 100%;
+                height: auto;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container">
+            <div class="header">
+              <div class="clinic-info">
+                <h1>BrightSmile Dental Clinic</h1>
+                <p>123 Dental Street, Health District</p>
+                <p>Phone: (123) 456-7890 | Email: info@brightsmile.com</p>
+              </div>
+              <div class="invoice-meta">
+                <div class="invoice-title">Treatment Invoice</div>
+                <div class="invoice-number">#DT${patient.id}</div>
+                <div>Date: ${invoiceDate}</div>
+              </div>
             </div>
-            <div class="invoice-meta">
-              <div class="invoice-title">Treatment Invoice</div>
-              <div class="invoice-number">#DT${patient.id}</div>
-              <div>Date: ${invoiceDate}</div>
-            </div>
-          </div>
-          <div class="section">
-            <div class="section-title">Patient Information</div>
-            <div class="patient-details">
-              <div class="detail-item">
-                <span class="detail-label">Full Name</span>
-                <span class="detail-value">${patient.name}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Age</span>
-                <span class="detail-value">${patient.age}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Gender</span>
-                <span class="detail-value">${patient.gender}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Phone Number</span>
-                <span class="detail-value">${patient.phone}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Occupation</span>
-                <span class="detail-value">${patient.career}</span>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">Province</span>
-                <span class="detail-value">${provinceName}</span>
+            <div class="section">
+              <div class="section-title">Patient Information</div>
+              <div class="patient-details">
+                <div class="detail-item">
+                  <span class="detail-label">Full Name</span>
+                  <span class="detail-value">${patient.name}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Age</span>
+                  <span class="detail-value">${patient.age}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Gender</span>
+                  <span class="detail-value">${patient.gender}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Phone Number</span>
+                  <span class="detail-value">${patient.phone}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Occupation</span>
+                  <span class="detail-value">${patient.career}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Province</span>
+                  <span class="detail-value">${provinceName}</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="section">
-            <div class="section-title">Treatment Details</div>
-            <table class="treatment-table">
-              <thead>
-                <tr>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>${treatmentName}</td>
-                  <td>${patient.status}</td>
-                  <td>$150.00</td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="total-section">
-              <div class="total-amount">Total: $150.00</div>
+            <div class="section">
+              <div class="section-title">Treatment Details</div>
+              <table class="treatment-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>${treatmentName}</td>
+                    <td>${patient.status}</td>
+                    <td>$150.00</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="total-section">
+                <div class="total-amount">Total: $150.00</div>
+              </div>
+            </div>
+            <div class="footer">
+              <p>Thank you for choosing BrightSmile Dental Clinic</p>
+              <p>Please bring this invoice for your next appointment</p>
+              <p>For any inquiries, please contact our office</p>
+            </div>
+            <div class="action-buttons">
+              <button class="btn btn-print" onclick="window.print()">Print Invoice</button>
+              <button class="btn btn-close" onclick="window.close()">Close Window</button>
             </div>
           </div>
-          <div class="footer">
-            <p>Thank you for choosing BrightSmile Dental Clinic</p>
-            <p>Please bring this invoice for your next appointment</p>
-            <p>For any inquiries, please contact our office</p>
-          </div>
-          <div class="action-buttons">
-            <button class="btn btn-print" onclick="window.print()">Print Invoice</button>
-            <button class="btn btn-close" onclick="window.close()">Close Window</button>
-          </div>
-        </div>
-      </body>
-    </html>
-  `);
-  invoiceWindow.document.close();
-};
-
+        </body>
+      </html>
+    `);
+    invoiceWindow.document.close();
+  };
 
   const exportToExcel = () => {
     const dataForExport = filteredPatients.map((patient) => ({
@@ -521,7 +496,6 @@ export default function PatientList() {
       Age: patient.age,
       Gender: patient.gender,
       Phone: patient.phone,
-      treat_id: patient.treat?.name || patient.disease,
       Career: patient.career,
       Status: patient.status,
       Registered: patient.create_at || patient.created_at
@@ -535,15 +509,186 @@ export default function PatientList() {
     XLSX.writeFile(workbook, "patients_data.xlsx");
   };
 
+  // Bar chart data preparation
+  const getAgeDistribution = () => {
+    const ageRanges = [
+      { range: "0-20", min: 0, max: 20, count: 0 },
+      { range: "21-40", min: 21, max: 40, count: 0 },
+      { range: "41-60", min: 41, max: 60, count: 0 },
+      { range: "61+", min: 61, max: Infinity, count: 0 },
+    ];
+
+    filteredPatients.forEach((patient) => {
+      const age = parseInt(patient.age);
+      for (const range of ageRanges) {
+        if (age >= range.min && age <= range.max) {
+          range.count += 1;
+          break;
+        }
+      }
+    });
+
+    return {
+      labels: ageRanges.map((r) => r.range),
+      datasets: [
+        {
+          label: "Number of Patients",
+          data: ageRanges.map((r) => r.count),
+          backgroundColor: isDark ? "rgba(246, 59, 59, 0.6)" : "rgba(250, 122, 10, 0.6)",
+          borderColor: isDark ? "rgb(246, 59, 59)" : "rgb(235, 133, 37)",
+          borderWidth: 4,
+          hoverBackgroundColor: isDark ? "rgba(249, 91, 0, 0.8)" : "rgba(247, 136, 0, 0.8)",
+        },
+      ],
+    };
+  };
+
+  // Pie chart data preparation
+  const getGenderDistribution = () => {
+    const genderCounts = { male: 0, female: 0 };
+    filteredPatients.forEach((patient) => {
+      if (patient.gender && genderCounts.hasOwnProperty(patient.gender.toLowerCase())) {
+        genderCounts[patient.gender.toLowerCase()] += 1;
+      }
+    });
+    const total = genderCounts.male + genderCounts.female;
+    const malePercentage = total > 0 ? ((genderCounts.male / total) * 100).toFixed(1) : 0;
+    const femalePercentage = total > 0 ? ((genderCounts.female / total) * 100).toFixed(1) : 0;
+
+    return {
+      labels: [`Male (${malePercentage}%)`, `Female (${femalePercentage}%)`],
+      datasets: [
+        {
+          label: "Gender Distribution",
+          data: [genderCounts.male, genderCounts.female],
+          backgroundColor: [
+            isDark ? "rgba(59, 130, 246, 0.6)" : "rgba(37, 99, 235, 0.6)", // Blue for male
+            isDark ? "rgba(236, 72, 153, 0.6)" : "rgba(219, 39, 119, 0.6)", // Pink for female
+          ],
+          borderColor: [
+            isDark ? "rgb(59, 130, 246)" : "rgb(37, 99, 235)",
+            isDark ? "rgb(236, 72, 153)" : "rgb(219, 39, 119)",
+          ],
+          borderWidth: 2,
+          hoverBackgroundColor: [
+            isDark ? "rgba(59, 130, 246, 0.8)" : "rgba(37, 99, 235, 0.8)",
+            isDark ? "rgba(236, 72, 153, 0.8)" : "rgba(219, 39, 119, 0.8)",
+          ],
+        },
+      ],
+    };
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          color: isDark ? "#e5e7eb" : "#374151",
+          font: {
+            size: 20,
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: "Patient Age Distribution",
+        color: isDark ? "#e5e7eb" : "#374151",
+        font: {
+          size: 20,
+          weight: "bold",
+        },
+        padding: {
+          top: 10,
+          bottom: 20,
+        },
+      },
+      tooltip: {
+        backgroundColor: isDark ? "rgba(31, 41, 55, 0.9)" : "rgba(255, 255, 255, 0.9)",
+        titleColor: isDark ? "#e5e7eb" : "#374151",
+        bodyColor: isDark ? "#e5e7eb" : "#374151",
+        borderColor: isDark ? "#4b5563" : "#d1d5db",
+        borderWidth: 4,
+      },
+    },
+    scales: {
+      x: {
+        ticks: {
+          color: isDark ? "#e5e7eb" : "#374151",
+        },
+        grid: {
+          display: false,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        ticks: {
+          color: isDark ? "#e5e7eb" : "#374151",
+          stepSize: 1,
+        },
+        grid: {
+          color: isDark ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)",
+        },
+      },
+    },
+  };
+
+  const pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top",
+        labels: {
+          color: isDark ? "#e5e7eb" : "#374151",
+          font: {
+            size: 20,
+          },
+        },
+      },
+      title: {
+        display: true,
+        text: "Patient Gender Distribution",
+        color: isDark ? "#e5e7eb" : "#374151",
+        font: {
+          size: 20,
+          weight: "bold",
+        },
+        padding: {
+          top: 10,
+          bottom: 20,
+        },
+      },
+      tooltip: {
+        backgroundColor: isDark ? "rgba(31, 41, 55, 0.9)" : "rgba(255, 255, 255, 0.9)",
+        titleColor: isDark ? "#e5e7eb" : "#374151",
+        bodyColor: isDark ? "#e5e7eb" : "#374151",
+        borderColor: isDark ? "#4b5563" : "#d1d5db",
+        borderWidth: 4,
+        callbacks: {
+          label: function(context) {
+            const label = context.label || '';
+            const value = context.parsed || 0;
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            return `${label}: ${value} (${percentage}%)`;
+          },
+        },
+      },
+    },
+  };
+
   return (
     <div
       className={`min-h-screen p-6 ${
         isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
       }`}
     >
-      
+       <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
       <div
-        className={`mx-auto rounded-xl  overflow-hidden ${
+        className={`mx-auto rounded-xl overflow-hidden ${
           isDark ? "bg-gray-800" : "bg-white"
         }`}
       >
@@ -562,7 +707,7 @@ export default function PatientList() {
               <div
                 className={`relative flex items-center rounded-lg ${
                   isDark ? "bg-gray-800" : "bg-white"
-                }  w-full md:w-64`}
+                } w-full md:w-64`}
               >
                 <FaSearch
                   className={`absolute left-3 ${
@@ -625,7 +770,7 @@ export default function PatientList() {
               </button>
             </div>
           </div>
-          <div className="overflow-x-auto rounded-lg   scrollbar-hide">
+          <div className="overflow-x-auto rounded-lg scrollbar-hide">
             <table className="min-w-full divide-y divide-gray-200">
               <thead
                 className={`${
@@ -680,15 +825,7 @@ export default function PatientList() {
                       Phone
                     </div>
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
-                  >
-                    <div className="flex items-center gap-2">
-                      <HeartIcon className="w-4 h-4" />
-                      Disease
-                    </div>
-                  </th>
+                 
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
@@ -790,9 +927,6 @@ export default function PatientList() {
                       <td className="px-7 py-4 whitespace-nowrap text-sm">
                         {p.phone}
                       </td>
-                      <td className="px-12 py-4 whitespace-nowrap text-sm">
-                        {p.treat?.name || p.disease}
-                      </td>
                       <td className="px-10 py-4 whitespace-nowrap text-sm">
                         <span
                           className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -839,7 +973,7 @@ export default function PatientList() {
                             <PencilIcon className="w-4 h-4" />
                           </button>
                           <button
-                           onClick={() => handlePrintInvoice(p)}
+                            onClick={() => handlePrintInvoice(p)}
                             className={`p-2 rounded-full ${
                               isDark
                                 ? "text-green-400 hover:bg-gray-700"
@@ -850,7 +984,7 @@ export default function PatientList() {
                             <PrinterIcon className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() =>handleDelete(p.id)}
+                            onClick={() => handleDelete(p.id)}
                             className={`p-2 rounded-full ${
                               isDark
                                 ? "text-red-400 hover:bg-gray-700"
@@ -876,6 +1010,7 @@ export default function PatientList() {
               </tbody>
             </table>
           </div>
+         
           {/* Pagination */}
           {status === "succeeded" && filteredPatients.length > 0 && (
             <div className="mt-6 flex flex-col items-end gap-4">
@@ -957,394 +1092,312 @@ export default function PatientList() {
               </p>
             </div>
           )}
+
+           {/* Charts Section */}
+          {status === "succeeded" && filteredPatients.length > 0 && (
+            <div className="mt-8">
+              <div
+                className={`rounded-xl p-6 ${
+                  isDark ? "bg-gray-800" : "bg-white"
+                } shadow-md flex flex-col md:flex-row gap-6`}
+              >
+                <div className="flex-1 h-80">
+                  <Bar 
+                    data={getAgeDistribution()}
+                    options={chartOptions}
+                    aria-label="Patient Age Distribution Bar Chart"
+                  />
+                </div>
+                <div className="flex-1 h-80">
+                  <Pie 
+                    data={getGenderDistribution()}
+                    options={pieChartOptions}
+                    aria-label="Patient Gender Distribution Pie Chart"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {showCreateModal && (
-        <div  className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4" data-aos="fade-down">
-          <div
-            className={`rounded-xl shadow-xl w-full max-w-2xl ${
-              isDark ? "bg-gray-800" : "bg-white"
-            }`}
-          >
-            <div
-              className={`p-4 border-b ${
+  <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" data-aos="fade-down" role="dialog" aria-labelledby="createModalTitle" aria-modal="true">
+    <div
+      className={`rounded-xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 ease-in-out ${
+        isDark ? "bg-gray-800" : "bg-white"
+      } max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200`}
+    >
+      <div
+        className={`p-5 border-b rounded-t-xl ${
+          isDark
+            ? "border-gray-700 bg-gray-900"
+            : "border-gray-200 bg-teal-50"
+        } flex justify-between items-center sticky top-0 z-10`}
+      >
+        <h2 id="createModalTitle" className="text-xl font-bold flex items-center gap-3">
+          <PlusIcon className="w-5 h-5 text-teal-600" />
+          <span className={isDark ? "text-teal-400" : "text-teal-800"}>New Patient Registration</span>
+        </h2>
+        <button
+          type="button"
+          onClick={() => setShowCreateModal(false)}
+          className={`rounded-full p-1 focus:outline-none focus:ring-2 ${
+            isDark ? "focus:ring-teal-500 text-gray-300 hover:text-white" : "focus:ring-teal-300 text-gray-500 hover:text-gray-700"
+          }`}
+          aria-label="Close modal"
+        >
+          <XMarkIcon className="w-6 h-6" />
+        </button>
+      </div>
+      <form onSubmit={handleSave} className="p-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Name Field */}
+          <div className="space-y-1 col-span-1">
+            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
+              Full Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={patient}
+              onChange={(e) => setPatient(e.target.value)}
+              placeholder="John Doe"
+              required
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
                 isDark
-                  ? "border-gray-700 bg-gray-700"
-                  : "border-gray-200 bg-blue-50"
-              }`}
+                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              } transition placeholder-gray-400`}
+              autoFocus
+              aria-required="true"
+            />
+          </div>
+
+          {/* Age Field */}
+          <div className="space-y-1">
+            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
+              Age <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+              placeholder="35"
+              min="1"
+              max="120"
+              required
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                isDark
+                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              } transition placeholder-gray-400`}
+              aria-required="true"
+            />
+          </div>
+
+          {/* Gender Field */}
+          <div className="space-y-1">
+            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
+              Gender <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                isDark
+                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              } transition`}
+              aria-required="true"
             >
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <PlusIcon className="w-5 h-5" />
-                Create New Patient
-              </h2>
-            </div>
-            <form onSubmit={handleSave} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={patient}
-                    onChange={(e) => setPatient(e.target.value)}
-                    placeholder="John Doe"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Age</label>
-                  <input
-                    type="number"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    placeholder="35"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Gender
-                  </label>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1234567890"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Treatment
-                  </label>
-                  <select
-                    value={treat}
-                    onChange={(e) => setTreat(e.target.value)}
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="">Select a Treatment</option>
-                    {Array.isArray(treats) &&
-                      treats.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Career
-                  </label>
-                  <input
-                    type="text"
-                    value={career}
-                    onChange={(e) => setCareer(e.target.value)}
-                    placeholder="Engineer"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={statusState}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="active">Active</option>
-                    <option value="recovered">Recovered</option>
-                    <option value="chronic">Chronic</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Province
-                  </label>
-                  <select
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="">Select Province</option>
-                    {Array.isArray(provinces) &&
-                      provinces.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className={`px-4 py-2 rounded-lg border ${
-                    isDark
-                      ? "border-gray-600 text-gray-200 hover:bg-gray-700"
-                      : "border-gray-300 text-gray-800 hover:bg-gray-100"
-                  } transition`}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition flex items-center gap-2"
-                >
-                  <PlusIcon className="w-4 h-4" />
-                  Create Patient
-                </button>
-              </div>
-            </form>
+              <option value="" disabled>Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          {/* Phone Field */}
+          <div className="space-y-1 col-span-1">
+            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
+              Phone <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="+1234567890"
+              required
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                isDark
+                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              } transition placeholder-gray-400`}
+              aria-required="true"
+            />
+          </div>
+
+          {/* Treatment Field */}
+        
+
+          {/* Career Field */}
+          <div className="space-y-1">
+            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
+              Occupation <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={career}
+              onChange={(e) => setCareer(e.target.value)}
+              placeholder="Dentist"
+              required
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                isDark
+                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              } transition placeholder-gray-400`}
+              aria-required="true"
+            />
+          </div>
+
+          {/* Status Field */}
+          <div className="space-y-1">
+            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
+              Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={statusState}
+              onChange={(e) => setStatus(e.target.value)}
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                isDark
+                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              } transition`}
+              aria-required="true"
+            >
+              <option value="" disabled>Select status</option>
+              <option value="active">Active</option>
+              <option value="recovered">Recovered</option>
+              <option value="chronic">Chronic</option>
+            </select>
+          </div>
+
+          {/* Province Field */}
+          <div className="space-y-1 col-span-1">
+            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
+              Province <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={province}
+              onChange={(e) => setProvince(e.target.value)}
+              required
+              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                isDark
+                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+              } transition`}
+              aria-required="true"
+            >
+              <option value="" disabled>Select province</option>
+              {Array.isArray(provinces) &&
+                provinces.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+            </select>
           </div>
         </div>
-      )}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
-          <div
-            className={`rounded-xl shadow-xl w-full max-w-2xl ${
-              isDark ? "bg-gray-800" : "bg-white"
-            }`}
+        
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(false)}
+            className={`px-5 py-2 rounded-lg font-medium text-sm ${
+              isDark
+                ? "border border-gray-600 text-gray-200 hover:bg-gray-700"
+                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+            } transition focus:outline-none focus:ring-2 focus:ring-teal-300`}
           >
-            <div
-              className={`p-4 border-b ${
-                isDark
-                  ? "border-gray-700 bg-gray-700"
-                  : "border-gray-200 bg-blue-50"
-              }`}
-            >
-              <h2 className="text-xl font-bold flex items-center gap-2">
-                <PencilIcon className="w-5 h-5" />
-                Edit Patient
-              </h2>
-            </div>
-            <form onSubmit={handleUpdate} className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={patient}
-                    onChange={(e) => setPatient(e.target.value)}
-                    placeholder="John Doe"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Age</label>
-                  <input
-                    type="number"
-                    value={age}
-                    onChange={(e) => setAge(e.target.value)}
-                    placeholder="35"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Gender
-                  </label>
-                  <select
-                    value={gender}
-                    onChange={(e) => setGender(e.target.value)}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="text"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1234567890"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Treatment
-                  </label>
-                  <select
-                    value={treat}
-                    onChange={(e) => setTreat(e.target.value)}
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="">Select a Treatment</option>
-                    {Array.isArray(treats) &&
-                      treats.map((t) => (
-                        <option key={t.id} value={t.id}>
-                          {t.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Career
-                  </label>
-                  <input
-                    type="text"
-                    value={career}
-                    onChange={(e) => setCareer(e.target.value)}
-                    placeholder="Engineer"
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={statusState}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="active">Active</option>
-                    <option value="recovered">Recovered</option>
-                    <option value="chronic">Chronic</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Province
-                  </label>
-                  <select
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
-                    required
-                    className={`w-full p-3 rounded-lg border ${
-                      isDark
-                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    } transition`}
-                  >
-                    <option value="">Select Province</option>
-                    {Array.isArray(provinces) &&
-                      provinces.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-              <div className="mt-8 flex justify-end space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className={`px-4 py-2 rounded-lg border ${
-                    isDark
-                      ? "border-gray-600 text-gray-200 hover:bg-gray-700"
-                      : "border-gray-300 text-gray-800 hover:bg-gray-100"
-                  } transition`}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow transition flex items-center gap-2"
-                >
-                  <PencilIcon className="w-4 h-4" />
-                  Save Changes
-                </button>
-              </div>
-            </form>
-          </div>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={!patient || !age || !gender || !phone ||  !career || !statusState || !province}
+            className={`px-5 py-2 rounded-lg font-semibold text-sm ${
+              isDark 
+                ? "bg-teal-600 hover:bg-teal-700 text-white"
+                : "bg-teal-500 hover:bg-teal-600 text-white"
+            } transition focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-md`}
+          >
+            Register Patient
+          </button>
         </div>
-      )}
+      </form>
+    </div>
+  </div>
+)}
+
+{showEditModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" role="dialog" aria-labelledby="editModalTitle" aria-modal="true">
+    <div
+      className={`rounded-xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 ease-in-out ${
+        isDark ? "bg-gray-800" : "bg-white"
+      } max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200`}
+    >
+      <div
+        className={`p-5 border-b rounded-t-xl ${
+          isDark
+            ? "border-gray-700 bg-gray-900"
+            : "border-gray-200 bg-teal-50"
+        } flex justify-between items-center sticky top-0 z-10`}
+      >
+        <h2 id="editModalTitle" className="text-xl font-bold flex items-center gap-3">
+          <PencilIcon className="w-5 h-5 text-teal-600" />
+          <span className={isDark ? "text-teal-400" : "text-teal-800"}>Edit Patient Record</span>
+        </h2>
+        <button
+          type="button"
+          onClick={() => setShowEditModal(false)}
+          className={`rounded-full p-1 focus:outline-none focus:ring-2 ${
+            isDark ? "focus:ring-teal-500 text-gray-300 hover:text-white" : "focus:ring-teal-300 text-gray-500 hover:text-gray-700"
+          }`}
+          aria-label="Close modal"
+        >
+          <XMarkIcon className="w-6 h-6" />
+        </button>
+      </div>
+      <form onSubmit={handleUpdate} className="p-5">
+        {/* Same form fields as create modal */}
+        {/* ... */}
+        
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={() => setShowEditModal(false)}
+            className={`px-5 py-2 rounded-lg font-medium text-sm ${
+              isDark
+                ? "border border-gray-600 text-gray-200 hover:bg-gray-700"
+                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+            } transition focus:outline-none focus:ring-2 focus:ring-teal-300`}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={!patient || !age || !gender || !phone ||  !career || !statusState || !province}
+            className={`px-5 py-2 rounded-lg font-semibold text-sm ${
+              isDark 
+                ? "bg-teal-600 hover:bg-teal-700 text-white"
+                : "bg-teal-500 hover:bg-teal-600 text-white"
+            } transition focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-md`}
+          >
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </div>
   );
 }

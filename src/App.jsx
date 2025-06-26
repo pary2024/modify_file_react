@@ -5,9 +5,9 @@ import Dash from "./pages/Dash";
 import PatientList from "./pages/PatientList";
 import Appointment from "./pages/Appointment";
 import Report from "./pages/Report";
-import Sms from "./pages/Sms";
+// import Sms from "./pages/Sms";
 import Finance from "./pages/Finance";
-import HumanResources from "./pages/HumanResources";
+
 import Doctor from "./pages/Doctor";
 import Department from "./pages/Department";
 import Login from "./Auth/Login";
@@ -20,11 +20,16 @@ import PrivateRoute from "./Routes/privateRoute";
 import SchoolManagement from "./pages/SchoolManagement";
 import Provinces from "./pages/Provnces";
 import Treat from "./pages/Treat";
-
+import Company from "./pages/company"
 import PaymentMethod from "./pages/Method";
 import 'aos/dist/aos.css';
 import Aos from "aos";
 import { useEffect } from "react";
+import DutyDoctor from "./pages/DutyDoctor";
+import Lab from "./pages/Lab";
+import Material from "./pages/Material";
+
+
 
 function App() {
    useEffect(() => {
@@ -45,40 +50,25 @@ function App() {
            <Route path="method" element={<PaymentMethod/>}/>
             <Route path="appoint/patient" element={<Appointment />} />
             <Route path="report" element={<Report />} />
-            <Route path="sms" element={<Sms />} />
+            {/* <Route path="sms" element={<Sms />} /> */}
             <Route path="finance" element={<Finance />} />
-            <Route path="human" element={<HumanResources />} />
+           
             <Route path="department" element={<Department />} />
             <Route path="student" element={<Student />} />
             <Route path="payment/patient" element={<Payment />} />
             <Route path="payment/student" element={<PaymentStudent />} />
             <Route path="appoint/student" element={<AppointmentStudent />} />
-            <Route path="doctor" element={
-              <PrivateRoute requiredRole="admin">
-                <Doctor/>
-              </PrivateRoute>
-            } />
-            <Route path="school" element={
-              <PrivateRoute requiredRole="admin">
-                <SchoolManagement/>
-              </PrivateRoute>
-            }/>
-            <Route path="province" element={
-              <PrivateRoute  requiredRole="admin"><Provinces/></PrivateRoute>
-            }/>
-            <Route path="treat" element={
-              <PrivateRoute  requiredRole="admin">
-                <Treat/>
-              </PrivateRoute>
-            }/>
-            <Route
-              path="user"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <UserManagement/>
-                </PrivateRoute>
-              }
-            />
+            
+            <Route path="company" element={<Company />}/>
+            <Route path="doctor" element={<Doctor />}/>
+            <Route path="school" element={<SchoolManagement/>}/>
+            <Route path="province" element={<Provinces />}/>
+            <Route path="treat" element={<Treat />} />
+            <Route path="user" element={<UserManagement />}/>
+
+            <Route path='dutyDoctor' element={<DutyDoctor/>}/>
+            <Route path='lab' element={<Lab/>}/>
+            <Route path='material' element={<Material/>}/>
           </Route>
         </Route>
       </Routes>

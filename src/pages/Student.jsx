@@ -45,47 +45,54 @@ export default function Student() {
   const [school, setSchool] = useState("");
   const [gender, setGender] = useState("male");
   const [birth_day, setBirthday] = useState("");
-  const [parent, setParent] = useState("");
+  const [parents, setParent] = useState("");
   const [grade, setGrade] = useState("");
   const [status, setStatus] = useState("active");
-  const [message, setMessage] = useState("");
+  const [NewStudent , setNewStudent] = useState(false);
+   const [alertMessage, setAlertMessage] = useState(null); 
   const [cardDesign, setCardDesign] = useState({
     backgroundColor: "#ffffff",
     textColor: "#000000",
     borderColor: "#0000ff",
     logo: null,
   });
+   useEffect(() => {
+        if (alertMessage) {
+          Swal.fire({
+            icon: alertMessage.type,
+            title: alertMessage.text,
+            showConfirmButton: false,
+            timer: 1500,
+            position: "top-end",
+          });
+          setAlertMessage(null); // clear after showing
+        }
+      }, [alertMessage]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setNewStudent((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+ 
 
   const handleSave = async (e) => {
     e.preventDefault();
     const data = {
       name,
-      age,
+      age:age,
       school_id: school,
-      gender,
-      birth_day,
-      parents: parent,
-      grade,
-      status,
+      gender:gender,
+      birth_day:birth_day,
+      parents: parents,
+      grade:grade,
+      status:status,
     };
     try {
       await dispatch(createStudent(data));
-      await dispatch(fetchStudents());
-      setMessage("Student created successfully");
-      setTimeout(() => {
-        setMessage("");
-      }, 3000);
+            dispatch(fetchStudents());
+      Swal.fire({
+              icon: "success",
+              title: "Province created successfully!",
+              showConfirmButton: false,
+              timer: 1500,
+              position: "top-center",
+            });
       setShowModal(false);
       setName("");
       setAge("");
@@ -373,21 +380,7 @@ export default function Student() {
         isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
       }`}
     >
-      {message && (
-        <div
-          role="status"
-          className="mb-4 p-3 bg-green-100 text-green-700 rounded flex justify-between items-center"
-        >
-          <span>{message}</span>
-          <button
-            onClick={() => setMessage("")}
-            className="text-green-700 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
-            aria-label="Dismiss success message"
-          >
-            ×
-          </button>
-        </div>
-      )}
+     
 
       <div className="mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
@@ -530,7 +523,7 @@ export default function Student() {
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {students
                   .filter((s) =>
-                    s.name.toLowerCase().includes(searchTerm.toLowerCase())
+                    (s.name || "").toLowerCase().includes(searchTerm.toLowerCase())
                   )
                   .map((s, index) => (
                     <tr
@@ -667,8 +660,8 @@ export default function Student() {
             className={`rounded-xl shadow-2xl w-full max-w-md ${
               isDark ? "bg-gray-800" : "bg-white"
             }`}
-          >
-            <div className="p-6">
+           data-aos="zoom-in">
+            <div className="p-6" >
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">
                   {isEditMode ? "Edit Student" : "Add New Student"}
@@ -778,8 +771,8 @@ export default function Student() {
                   }`}
                 >
                   <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
                 </select>
 
                 <select
@@ -860,7 +853,7 @@ export default function Student() {
                   </label>
                   <input
                     name="parents"
-                    value={parent}
+                    value={parents}
                     onChange={(e) => setParent(e.target.value)}
                     placeholder="Jane Doe"
                     required
@@ -872,25 +865,7 @@ export default function Student() {
                   />
                 </div>
 
-                <div>
-                  <label
-                    className={`block text-sm font-medium mb-1 ${
-                      isDark ? "text-gray-300" : "text-gray-700"
-                    }`}
-                  >
-                    Student Photo
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600 focus:ring-blue-500"
-                        : "bg-white border-gray-300 focus:ring-blue-300"
-                    }`}
-                  />
-                </div>
+               
 
                 <div className="flex justify-end gap-3 pt-4">
                   <button

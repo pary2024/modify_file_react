@@ -74,22 +74,7 @@ const Treat = () => {
         Dental Treatment Management
       </h1>
 
-      {message && (
-        <div
-          role="status"
-          className="mb-4 p-3 bg-green-100 text-green-700 rounded flex justify-between items-center"
-        >
-          <span>{message}</span>
-          <button
-            onClick={() => setMessage("")}
-            className="text-green-700 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
-            aria-label="Dismiss success message"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
+     
       {/* UX: Enhanced error message with dismiss button and ARIA alert */}
       {error && (
         <div

@@ -17,10 +17,12 @@ import {
   Alert,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import { fetchCompanies } from '../stores/companySlice';
 
 const UserManagement = () => {
   const dispatch = useDispatch();
   const { users } = useSelector((state) => state.user);
+  const {companies} = useSelector((state) => state.company);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -33,14 +35,29 @@ const UserManagement = () => {
   const [phone , setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [status , setStatus] = useState('active');
+  const [company , setCompany] = useState('');
+  const [alertMessage, setAlertMessage] = useState('');
 
   useEffect(() => {
     dispatch(fetchUsers());
+    dispatch(fetchCompanies());
   }, [dispatch]);
 
   useEffect(() => {
     setFilteredUsers(users);
   }, [users]);
+  useEffect(() => {
+      if (alertMessage) {
+        Swal.fire({
+          icon: alertMessage.type,
+          title: alertMessage.text,
+          showConfirmButton: false,
+          timer: 1500,
+          position: "top-end",
+        });
+        setAlertMessage(null); // clear after showing
+      }
+    }, [alertMessage]);
 
   useEffect(() => {
     const results = (users || []).filter(
@@ -77,13 +94,21 @@ const UserManagement = () => {
       role: role,
       phone: phone,
       password: password,
-      status: status
+      status: status,
+      company_id: company
     }
     try{
       await dispatch(createUser( newUser ));
       setSnackbar({ open: true, message: 'User created successfully', severity: 'success' });
       dispatch(fetchUsers());
       handleCloseForm();
+       Swal.fire({
+              icon: "success",
+              title: "User created successfully!",
+              showConfirmButton: false,
+              timer: 1500,
+              position: "top-end",
+            });
     }catch(e){
       console.log(e); 
     }
@@ -214,6 +239,29 @@ const UserManagement = () => {
                   },
                 }}
               />
+             <FormControl fullWidth margin="normal">
+                  <InputLabel id="company-label" sx={{ color: 'text.primary' }}>Company</InputLabel>
+                  <Select
+                    labelId="company-label"
+                    value={company} 
+                    label="Company"
+                    onChange={(e) => setCompany(e.target.value)} 
+                    sx={{
+                      bgcolor: 'background.paper',
+                      color: 'text.primary',
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' },
+                    }}
+                  >
+                    {companies?.map((c) => (
+                      <MenuItem key={c.id} value={c.id}>
+                        {c.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+              </FormControl>
+
               <TextField
                 fullWidth
                 margin="normal"
@@ -298,6 +346,7 @@ const UserManagement = () => {
             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Name</TableCell>
             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Email</TableCell>
             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Phone</TableCell>
+            <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Company</TableCell>
             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Role</TableCell>
             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Status</TableCell>
             <TableCell sx={{ color: 'text.primary', fontWeight: 'bold' }}>Actions</TableCell>
@@ -309,6 +358,7 @@ const UserManagement = () => {
               <TableCell sx={{ color: 'text.primary' }}>{user.name}</TableCell>
               <TableCell sx={{ color: 'text.primary' }}>{user.email}</TableCell>
               <TableCell sx={{ color: 'text.primary' }}>{user.phone}</TableCell>
+              <TableCell sx={{ color: 'text.primary' }}>{user.company}</TableCell>
               <TableCell sx={{ color: 'text.primary' }}>{user.role}</TableCell>
               <TableCell>
                 <span

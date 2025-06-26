@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { ThemeContext } from '../colors/Thems';
 import { useDispatch, useSelector } from 'react-redux';
-import { createProvince, fetchProvinces } from '../stores/provinceSlice';
-
+import { createProvince, deleteProvince, fetchProvinces } from '../stores/provinceSlice';
 const Provinces = () => {
   const { isDark } = useContext(ThemeContext);
 
   const dispatch = useDispatch();
   const { provinces } = useSelector((state)=>state.province);
   const [alertMessage, setAlertMessage] = useState(null); 
+ 
   useEffect(()=>{
     dispatch(fetchProvinces());
   },[dispatch]);
@@ -26,14 +26,7 @@ const Provinces = () => {
     }, [alertMessage]);
 
   // Auto-clear success message after 3 seconds
-  useEffect(() => {
-    if (successMessage) {
-      const timer = setTimeout(() => {
-        setSuccessMessage(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successMessage]);
+  
   
   
   const [editId, setEditId] = useState(null);
@@ -59,17 +52,28 @@ const Provinces = () => {
       console.log(e);
     }
   }
+  const handleDelete = async (id) =>{
+    try{
+      await dispatch(deleteProvince(id));
+      dispatch(fetchProvinces());
+      Swal.fire({
+        icon: "success",
+        title: "Province deleted successfully!",
+        showConfirmButton: false,
+        timer: 1500,
+        position: "top-end",
+      });
+    }catch(e){
+      console.log(e);
+    }
+  }
 
  
   return (
     <div className={`container mx-auto p-4 ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
       <h1 className="text-2xl font-bold mb-6 text-center">Province Management System</h1>
 
-      {successMessage && (
-        <div className="mb-4 p-3 bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200 rounded">
-          {successMessage}
-        </div>
-      )}
+     
       {/* Search and Stats */}
       <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
         <div className="w-full md:w-1/3">

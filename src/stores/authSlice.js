@@ -9,29 +9,36 @@ export const loginUser = createAsyncThunk(
       const response = await auth.login(credentials);
       const data = response.data;
 
-      // Expecting: { token: "...", user: { role: "admin" } }
       const token = data.token;
-      const roles = data.user?.roles;
+      const roles = data.roles; // should be an array like ["admin", "editor"]
+      
 
-      if (!token || !roles) {
-        throw new Error('Invalid login response: token or role missing');
+      if (!token || !Array.isArray(roles)) {
+        throw new Error('Invalid login response: token or roles missing');
       }
 
-      // Store in localStorage
+      // ✅ Store in localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('role', roles);
+      localStorage.setItem('roles', roles); 
+      localStorage.setItem('company', credentials.company); 
+      
+      
 
-      return { token, user: data.user };
+      return { token,  roles };
     } catch (error) {
       console.error('Login error:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
       });
-      return rejectWithValue(error.response?.data?.message || error.message);
+
+      return rejectWithValue(
+        error.response?.data?.message || 'Login failed. Please try again.'
+      );
     }
   }
 );
+
 
 // Async Thunk: Logout User
 export const logoutUser = createAsyncThunk(
@@ -72,9 +79,7 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.status = 'succeeded';
-        state.token = action.payload.token;
-        state.user = action.payload.user;
-        state.role = action.payload.user.roles;
+        state.token = action.payload.token; 
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -90,7 +95,6 @@ const authSlice = createSlice({
       .addCase(logoutUser.fulfilled, (state) => {
         state.loading = false;
         state.status = 'idle';
-        state.user = null;
         state.token = null;
         state.role = null;
         state.error = null;

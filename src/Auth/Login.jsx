@@ -1,24 +1,51 @@
 // Auth/Login.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../stores/authSlice';
 import { useNavigate } from 'react-router-dom';
+import { PlusIcon } from '@heroicons/react/24/solid';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [company , setCompany] = useState('');
   const [error, setError] = useState('');
+  const [companyImage, setCompanyImage] = useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { status, error: authError } = useSelector((state) => state.auth);
+  const {companies} = useSelector((state) => state.company);
+  const fileInputRef = useRef(null);
 
+    useEffect(() => {
+    const savedImage = localStorage.getItem('companyImage');
+    if (savedImage) {
+      setCompanyImage(savedImage);
+    }
+  }, []);
+  const handleClick = () => {
+    fileInputRef.current.click();
+  };
+ const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setCompanyImage(base64String);
+        localStorage.setItem('companyImage', base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(''); // Clear previous errors
 
     try {
-      const result = await dispatch(loginUser({ email, password }));
+      const result = await dispatch(loginUser({ email, password,company}));
       if (loginUser.fulfilled.match(result)) {
+       
         navigate('/admin');
       } else {
         setError(authError || 'Login failed. Please check your credentials.');
@@ -35,13 +62,30 @@ const Login = () => {
         onSubmit={handleLogin}
         className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md transition-all"
       >
-        <div className="flex justify-center mb-4">
+         <div className="flex justify-center mb-6">
+      <div
+        className="w-24 h-24 rounded-full border-2 border-dashed border-blue-400 flex items-center justify-center cursor-pointer relative group hover:bg-blue-50 transition"
+        onClick={handleClick}
+      >
+        {companyImage ? (
           <img
-            src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQWWbQToNUShJSUfC14XOM3QXCJf4BalOfIRQ&s"
-            alt="Dentist Logo"
-            className="w-20 h-20 rounded-full border-2 border-blue-500"
+            src={companyImage}
+            alt="Selected"
+            className="w-full h-full object-cover rounded-full"
           />
-        </div>
+        ) : (
+          <PlusIcon className="w-8 h-8 text-blue-400 group-hover:scale-110 transition" />
+        )}
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+        />
+      </div>
+    </div>
 
         <h2 className="text-3xl font-bold text-center text-blue-600 mb-2">
           Dental Clinic Login
@@ -63,6 +107,18 @@ const Login = () => {
             placeholder="Enter your email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium">Company</label>
+          <input
+            type="text"
+            name='company'
+            className="w-full px-4 py-2 border rounded-lg mt-1 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="Enter your company"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
             required
           />
         </div>

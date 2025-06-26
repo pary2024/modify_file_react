@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { createAppointmentPatient, fetchAppointmentPatients } from "../stores/appointmentPatientSlice";
 import { fetchDoctors } from "../stores/doctorSlice";
 import { fetchPatients } from "../stores/patientSlice";
+import { ToastContainer,  toast } from 'react-toastify';
 
 const Appointment = () => {
   const { isDark } = useContext(ThemeContext);
@@ -13,8 +14,6 @@ const Appointment = () => {
   );
   const { doctors } = useSelector((state) => state.doctor);
   const { patients } = useSelector((state) => state.patient);
-
-  const [fontSize, setFontSize] = useState(14);
   const [activeTab, setActiveTab] = useState("appointments");
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [patientId , setPatientId] = useState('');
@@ -23,8 +22,7 @@ const Appointment = () => {
   const [time_in , setTimeIn] = useState('');
   const [time_out , setTimeOut] = useState('');
   const [status , setStatus] = useState('comfirmed');
-  const [message , setMessage] = useState('');
-
+ 
   useEffect(() => {
     dispatch(fetchAppointmentPatients());
     dispatch(fetchDoctors());
@@ -48,16 +46,19 @@ const Appointment = () => {
     return;
   }
     try {
-      await dispatch(createAppointmentPatient(data));
-      setMessage("Appointment created successfully");
-     setTimeout(() => {
-          setMessage("");
-        }, 3000); 
+      await dispatch(createAppointmentPatient(data)); 
       dispatch(fetchAppointmentPatients());
-
+      toast.success('Appointment created successfully!', { position: "top-right" });
+      setPatientId('');
+      setDoctorId('');
+      setDate('');
+      setTimeIn('');
+      setTimeOut('');
+      setStatus('');
 
     }catch(e){
-      console.log(e)
+      toast.error(`Error creating appointment: ${e.message}`, { position: "top-right" });
+      
     }
   }
 
@@ -396,379 +397,455 @@ const Appointment = () => {
     printWindow.document.write(html);
     printWindow.document.close();
   };
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+ 
 
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+ 
 
-  if (!appointmentPatients || appointmentPatients.length === 0) {
-    return <div>No appointments available.</div>;
-  }
-
-  return (
-    <div
-      className={`min-h-screen p-4 md:p-8 ${
-        isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
-      }`}
-    >
-       {message && (
-        <div className="mt-4 p-3 bg-green-100 text-green-800 border border-green-400 rounded">
-          {message}
-        </div>
-      )}
-      <div className="mx-auto">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-0">
-            Appointment Management
+ return (
+  <div
+    className={`min-h-screen p-4 md:p-8 transition-colors duration-200 ${
+      isDark ? "bg-gray-900 text-gray-100" : "bg-blue-50 text-gray-800"
+    }`}
+    
+  >
+    <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
+    
+    <div className=" mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-teal-600 to-blue-600 bg-clip-text text-transparent">
+            Dental Appointment Manager
           </h1>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setFontSize((f) => Math.max(12, f - 1))}
-                className={`px-3 py-1 rounded ${
-                  isDark
-                    ? "bg-gray-700 hover:bg-gray-600"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-              >
-                A-
-              </button>
-              <span className="text-sm">Font: {fontSize}px</span>
-              <button
-                onClick={() => setFontSize((f) => Math.min(20, f + 1))}
-                className={`px-3 py-1 rounded ${
-                  isDark
-                    ? "bg-gray-700 hover:bg-gray-600"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
-              >
-                A+
-              </button>
-            </div>
-          </div>
+          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+            Manage patient appointments and schedules
+          </p>
         </div>
+         
+        
+         
+      </div>
 
-        {/* Tabs */}
-        <div className="flex border-b mb-6">
-          <button
-            className={`py-2 px-4 font-medium ${
-              activeTab === "appointments"
-                ? isDark
-                  ? "border-b-2 border-blue-400 text-blue-400"
-                  : "border-b-2 border-blue-600 text-blue-600"
-                : ""
-            }`}
-            onClick={() => setActiveTab("appointments")}
-          >
-            Appointments
-          </button>
-          <button
-            className={`py-2 px-4 font-medium ${
-              activeTab === "new"
-                ? isDark
-                  ? "border-b-2 border-blue-400 text-blue-400"
-                  : "border-b-2 border-blue-600 text-blue-600"
-                : ""
-            }`}
-            onClick={() => setActiveTab("new")}
-          >
-            New Appointment
-          </button>
-        </div>
+      {/* Tabs */}
+      <div className="flex border-b mb-8">
 
-        {activeTab === "appointments" ? (
-          <div
-            className={`rounded-lg shadow overflow-hidden ${
-              isDark ? "bg-gray-800" : "bg-white"
-            }`}
-          >
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className={isDark ? "bg-gray-700" : "bg-gray-100"}>
-                  <tr>
-                    <th className="py-3 px-4 text-left">ID</th>
-                    <th className="py-3 px-4 text-left">User</th>
-                    <th className="py-3 px-4 text-left">Patient</th>
-                    <th className="py-3 px-4 text-left">Doctor</th>
-                    <th className="py-3 px-4 text-left">Date</th>
-                    <th className="py-3 px-4 text-left">Time</th>
-                    <th className="py-3 px-4 text-left">Status</th>
-                    <th className="py-3 px-4 text-left">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {appointmentPatients.map((appt) => (
-                    <tr
-                      key={appt.id}
-                      className={`border-t ${
-                        isDark
-                          ? "border-gray-700 hover:bg-gray-700"
-                          : "border-gray-200 hover:bg-gray-50"
-                      }`}
-                    >
-                      <td className="py-3 px-4">{appt.id}</td>
-                      <td className="py-3 px-4">{appt.user?.name || "N/A"}</td>
-                      <td className="py-3 px-4">
-                        {appt.patient?.name || "N/A"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {appt.doctor?.name || "N/A"}
-                      </td>
-                      <td className="py-3 px-4">{appt.date}</td>
-                      <td className="py-3 px-4">
-                        {appt.time_in} - {appt.time_out}
-                      </td>
-                      <td className="py-3 px-4">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs ${
-                            appt.status === "Confirmed"
-                              ? "bg-green-100 text-green-800"
-                              : appt.status === "Pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {appt.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 flex space-x-2">
+        <button
+          className={`py-3 px-6 font-medium transition-all duration-200 relative ${
+            activeTab === "appointments"
+              ? isDark
+                ? "text-teal-400"
+                : "text-teal-600"
+              : isDark
+              ? "text-gray-400 hover:text-gray-200"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+          onClick={() => setActiveTab("appointments")}
+        >
+          Appointments
+          {activeTab === "appointments" && (
+            <span className={`absolute bottom-0 left-0 right-0 h-0.5 ${isDark ? "bg-teal-400" : "bg-teal-600"}`}></span>
+          )}
+        </button>
+        <button
+          className={`py-3 px-6 font-medium transition-all duration-200 relative ${
+            activeTab === "new"
+              ? isDark
+                ? "text-teal-400"
+                : "text-teal-600"
+              : isDark
+              ? "text-gray-400 hover:text-gray-200"
+              : "text-gray-600 hover:text-gray-900"
+          }`}
+          onClick={() => setActiveTab("new")}
+        >
+          New Appointment
+          {activeTab === "new" && (
+            <span className={`absolute bottom-0 left-0 right-0 h-0.5 ${isDark ? "bg-teal-400" : "bg-teal-600"}`}></span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === "appointments" ? (
+        <div
+          className={`rounded-xl shadow-lg overflow-hidden border ${
+            isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+          }`}
+        >
+          <div className="overflow-x-auto">
+            
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className={isDark ? "bg-gray-700" : "bg-blue-50"}>
+                <tr>
+                  <th className="py-4 px-6 text-left font-medium uppercase tracking-wider">ID</th>
+                  <th className="py-4 px-6 text-left font-medium uppercase tracking-wider">Patient</th>
+                  <th className="py-4 px-6 text-left font-medium uppercase tracking-wider">Doctor</th>
+                  <th className="py-4 px-6 text-left font-medium uppercase tracking-wider">Date</th>
+                  <th className="py-4 px-6 text-left font-medium uppercase tracking-wider">Time</th>
+                  <th className="py-4 px-6 text-left font-medium uppercase tracking-wider">Status</th>
+                  <th className="py-4 px-6 text-left font-medium uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isDark ? "divide-gray-700" : "divide-gray-200"}`}>
+                {appointmentPatients.map((appt) => (
+                  <tr
+                    key={appt.id}
+                    className={`transition ${isDark ? "hover:bg-gray-700" : "hover:bg-blue-50"}`}
+                  >
+                    <td className="py-4 px-6 whitespace-nowrap">{appt.id}</td>
+                    <td className="py-4 px-6">{appt.patient?.name || "N/A"}</td>
+                    <td className="py-4 px-6">{appt.doctor?.name || "N/A"}</td>
+                    <td className="py-4 px-6 whitespace-nowrap">{appt.date}</td>
+                    <td className="py-4 px-6 whitespace-nowrap">
+                      {appt.time_in} - {appt.time_out}
+                    </td>
+                    <td className="py-4 px-6">
+                      <span
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                          appt.status === "Confirmed"
+                            ? "bg-green-100 text-green-800"
+                            : appt.status === "Pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {appt.status}
+                      </span>
+                    </td>
+                    <td className="py-4 px-6 whitespace-nowrap">
+                      <div className="flex space-x-2">
                         <button
                           onClick={() => handleViewDetails(appt)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg text-sm flex items-center transition"
                         >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
                           View
                         </button>
                         <button
                           onClick={() => handlePrintInvoice(appt)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-sm"
+                          className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-1 rounded-lg text-sm flex items-center transition"
                         >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+                            />
+                          </svg>
                           Invoice
                         </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <div
-            className={`rounded-lg shadow p-6 ${
-              isDark ? "bg-gray-800" : "bg-white"
-            }`}
-          >
-            <h2 className="text-xl font-semibold mb-6">New Appointment</h2>
-            <form onSubmit={ handleSave}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-               
-                <div>
-                  <label className="block mb-2 font-medium">Patient</label>
-                  <select
-                    name="patient_id"
-                    value={patientId}
-                    onChange={(e)=> setPatientId(e.target.value)}
-                    className={`w-full p-2 border rounded ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                    required
-                  >
-                    <option value="">Select a patient</option>
-                    {patients.map((patient) => (
-                      <option key={patient.id} value={patient.id}>
-                        {patient.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-2 font-medium">Doctor</label>
-                  <select
-                    name="doctor_id"
-                    value={doctorId}
-                    onChange={(e)=> setDoctorId(e.target.value)}
-                    className={`w-full p-2 border rounded ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                    required
-                  >
-                    <option value="">Select a doctor</option>
-                    {doctors.map((doctor) => (
-                      <option key={doctor.id} value={doctor.id}>
-                        {doctor.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block mb-2 font-medium">Date</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={date}
-                    onChange={(e)=> setDate(e.target.value)}
-                    className={`w-full p-2 border rounded ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 font-medium">Time In</label>
-                  <input
-                    type="time"
-                    name="time_in"
-                    value={time_in}
-                    onChange={(e)=> setTimeIn(e.target.value)}
-
-                    className={`w-full p-2 border rounded ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 font-medium">Time Out</label>
-                  <input
-                    type="time"
-                    name="time_out"
-                    value={time_out}
-                    onChange={(e)=> setTimeOut(e.target.value)}
-                    className={`w-full p-2 border rounded ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block mb-2 font-medium">Status</label>
-                  <select
-                    name="status"
-                    value={status}
-                    onChange={(e)=> setStatus(e.target.value)}
-                    className={`w-full p-2 border rounded ${
-                      isDark
-                        ? "bg-gray-700 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                  >
-                    <option>select status</option>
-                    <option value="comfirmed">comfirmed</option>
-                    <option value="pending">pending</option>
-                  
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-medium"
-                >
-                  Create Appointment
-                </button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        {selectedAppointment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div
-              className={`rounded-lg shadow-lg p-6 w-full max-w-2xl ${
-                isDark ? "bg-gray-800" : "bg-white"
-              }`}
+        </div>
+      ) : (
+        <div
+          className={`rounded-xl shadow-lg p-6 border ${
+            isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+          }`}
+        >
+          <h2 className="text-xl font-semibold mb-6 flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6 mr-2 text-teal-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
             >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Appointment Details</h2>
-                <button
-                  onClick={handleCloseDetails}
-                  className={`p-2 rounded-full ${
-                    isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
-                  }`}
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div>
-                  <p className="font-medium">Appointment ID:</p>
-                  <p>{selectedAppointment.id}</p>
-                </div>
-                <div>
-                  <p className="font-medium">User:</p>
-                  <p>{selectedAppointment.user?.name || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="font-medium">Patient:</p>
-                  <p>{selectedAppointment.patient?.name || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="font-medium">Doctor:</p>
-                  <p>{selectedAppointment.doctor?.name || "N/A"}</p>
-                </div>
-                <div>
-                  <p className="font-medium">Date:</p>
-                  <p>{selectedAppointment.date}</p>
-                </div>
-                <div>
-                  <p className="font-medium">Time:</p>
-                  <p>
-                    {selectedAppointment.time_in} -{" "}
-                    {selectedAppointment.time_out}
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium">Status:</p>
-                  <p>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        selectedAppointment.status === "Confirmed"
-                          ? "bg-green-100 text-green-800"
-                          : selectedAppointment.status === "Pending"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {selectedAppointment.status}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button
-                  onClick={handleCloseDetails}
-                  className={`px-4 py-2 rounded font-medium ${
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+            New Dental Appointment
+          </h2>
+         
+          <form onSubmit={handleSave}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block mb-2 font-medium">Patient</label>
+                <select
+                  name="patient_id"
+                  value={patientId}
+                  onChange={(e) => setPatientId(e.target.value)}
+                  className={`w-full p-3 border rounded-lg transition focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
                     isDark
-                      ? "bg-gray-700 hover:bg-gray-600"
-                      : "bg-gray-200 hover:bg-gray-300"
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-300"
+                  }`}
+                  required
+                >
+                  <option value="">Select a patient</option>
+                  {patients.map((patient) => (
+                    <option key={patient.id} value={patient.id}>
+                      {patient.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Dentist</label>
+                <select
+                  name="doctor_id"
+                  value={doctorId}
+                  onChange={(e) => setDoctorId(e.target.value)}
+                  className={`w-full p-3 border rounded-lg transition focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
+                    isDark
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-300"
+                  }`}
+                  required
+                >
+                  <option value="">Select a dentist</option>
+                  {doctors.map((doctor) => (
+                    <option key={doctor.id} value={doctor.id}>
+                      {doctor.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2 font-medium">Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className={`w-full p-3 border rounded-lg transition focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
+                    isDark
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-300"
+                  }`}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block mb-2 font-medium">Start Time</label>
+                <input
+                  type="time"
+                  name="time_in"
+                  value={time_in}
+                  onChange={(e) => setTimeIn(e.target.value)}
+                  className={`w-full p-3 border rounded-lg transition focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
+                    isDark
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-300"
+                  }`}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block mb-2 font-medium">End Time</label>
+                <input
+                  type="time"
+                  name="time_out"
+                  value={time_out}
+                  onChange={(e) => setTimeOut(e.target.value)}
+                  className={`w-full p-3 border rounded-lg transition focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
+                    isDark
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-300"
+                  }`}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block mb-2 font-medium">Status</label>
+                <select
+                  name="status"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className={`w-full p-3 border rounded-lg transition focus:ring-2 focus:ring-teal-500 focus:border-teal-500 ${
+                    isDark
+                      ? "bg-gray-700 border-gray-600"
+                      : "bg-white border-gray-300"
                   }`}
                 >
-                  Close
-                </button>
+                  <option value="">Select status</option>
+                  <option value="comfirmed">Confirmed</option>
+                  <option value="pending">Pending</option>
+                </select>
               </div>
             </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-medium flex items-center transition"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 mr-2"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Create Appointment
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {selectedAppointment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div
+            className={`rounded-xl shadow-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto ${
+              isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+            } border`}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold flex items-center">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6 mr-2 text-teal-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
+                </svg>
+                Appointment Details
+              </h2>
+              <button
+                onClick={handleCloseDetails}
+                className={`p-2 rounded-full transition ${
+                  isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"
+                }`}
+                aria-label="Close"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="bg-blue-50/50 p-4 rounded-lg">
+                <p className="font-medium text-blue-800 mb-1">Appointment ID</p>
+                <p className="text-lg font-semibold">{selectedAppointment.id}</p>
+              </div>
+              
+              <div className="bg-blue-50/50 p-4 rounded-lg">
+                <p className="font-medium text-blue-800 mb-1">Status</p>
+                <p>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      selectedAppointment.status === "Confirmed"
+                        ? "bg-green-100 text-green-800"
+                        : selectedAppointment.status === "Pending"
+                        ? "bg-yellow-100 text-yellow-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {selectedAppointment.status}
+                  </span>
+                </p>
+              </div>
+              
+              <div className="bg-blue-50/50 p-4 rounded-lg">
+                <p className="font-medium text-blue-800 mb-1">Patient</p>
+                <p className="text-lg">{selectedAppointment.patient?.name || "N/A"}</p>
+              </div>
+              
+              <div className="bg-blue-50/50 p-4 rounded-lg">
+                <p className="font-medium text-blue-800 mb-1">Dentist</p>
+                <p className="text-lg">{selectedAppointment.doctor?.name || "N/A"}</p>
+              </div>
+              
+              <div className="bg-blue-50/50 p-4 rounded-lg">
+                <p className="font-medium text-blue-800 mb-1">Date</p>
+                <p className="text-lg">{selectedAppointment.date}</p>
+              </div>
+              
+              <div className="bg-blue-50/50 p-4 rounded-lg">
+                <p className="font-medium text-blue-800 mb-1">Time Slot</p>
+                <p className="text-lg">
+                  {selectedAppointment.time_in} - {selectedAppointment.time_out}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={handleCloseDetails}
+                className={`px-6 py-2 rounded-lg font-medium transition ${
+                  isDark
+                    ? "bg-gray-700 hover:bg-gray-600 text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                }`}
+              >
+                Close
+              </button>
+              <button
+                onClick={() => handlePrintInvoice(selectedAppointment)}
+                className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg font-medium transition"
+              >
+                Print Invoice
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
 };
 
 export default Appointment;
