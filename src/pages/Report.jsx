@@ -41,6 +41,7 @@ const Report = () => {
   useEffect(()=>{
     dispatch(fetchReports());
   },[dispatch])
+  
 
   // Sample data - in a real app, this would come from an API
   const stats = {

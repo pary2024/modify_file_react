@@ -16,7 +16,6 @@ import Payment from "./pages/Payment";
 import PaymentStudent from "./pages/PaymentStudent";
 import AppointmentStudent from "./pages/AppointmentStudent";
 import UserManagement from "./pages/UserManagement";
-import PrivateRoute from "./Routes/privateRoute";
 import SchoolManagement from "./pages/SchoolManagement";
 import Provinces from "./pages/Provnces";
 import Treat from "./pages/Treat";
@@ -28,9 +27,7 @@ import { useEffect } from "react";
 import DutyDoctor from "./pages/DutyDoctor";
 import Lab from "./pages/Lab";
 import Material from "./pages/Material";
-
-
-
+import {PrivateRoute} from "./Routes/PrivateRouter";
 function App() {
    useEffect(() => {
     Aos.init({

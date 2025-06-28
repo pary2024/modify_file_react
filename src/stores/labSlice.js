@@ -5,7 +5,7 @@ import lab from '../service/lab';
 export const fetchLabs = createAsyncThunk('lab/fetchLabs', async (_, { rejectWithValue }) => {
   try {
     const response = await lab.getLabs();
-    return response.data;
+    return response.data.labs;
   } catch (error) {
     return rejectWithValue(error.response?.data || error.message);
   }

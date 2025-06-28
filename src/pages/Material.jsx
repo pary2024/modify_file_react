@@ -12,7 +12,7 @@ const Material = () => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [qty, setQty] = useState('');
-  const [date , setDate] = useState('');
+  const [date, setDate] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -34,7 +34,7 @@ const Material = () => {
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentMaterials = filteredMaterials.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredMaterials.length / itemsPerPage) || 1; // Ensure at least 1 page
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -71,13 +71,121 @@ const Material = () => {
   };
 
   const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
   };
 
   const calculateTotalValue = () => {
     return filteredMaterials.reduce((total, item) => {
       return total + (item.price * (item.qty || item.quantity || 0));
     }, 0).toFixed(2);
+  };
+
+  // Generate pagination buttons
+  const getPaginationButtons = () => {
+    const buttons = [];
+    const maxButtons = 5; // Maximum number of page buttons to show
+    let startPage, endPage;
+
+    // Determine the range of pages to show
+    if (totalPages <= maxButtons) {
+      startPage = 1;
+      endPage = totalPages;
+    } else {
+      const maxPagesBefore = Math.floor(maxButtons / 2);
+      const maxPagesAfter = Math.ceil(maxButtons / 2) - 1;
+      
+      if (currentPage <= maxPagesBefore) {
+        startPage = 1;
+        endPage = maxButtons;
+      } else if (currentPage + maxPagesAfter >= totalPages) {
+        startPage = totalPages - maxButtons + 1;
+        endPage = totalPages;
+      } else {
+        startPage = currentPage - maxPagesBefore;
+        endPage = currentPage + maxPagesAfter;
+      }
+    }
+
+    // Add first page and ellipsis
+    if (startPage > 1) {
+      buttons.push(
+        <button
+          key={1}
+          onClick={() => handlePageChange(1)}
+          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+            currentPage === 1
+              ? isDark
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : 'bg-blue-500 border-blue-500 text-white'
+              : isDark
+                ? 'border-gray-700 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          1
+        </button>
+      );
+      if (startPage > 2) {
+        buttons.push(
+          <span key="start-ellipsis" className="relative inline-flex items-center px-4 py-2 text-sm text-gray-500">
+            ...
+          </span>
+        );
+      }
+    }
+
+    // Add page buttons
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          onClick={() => handlePageChange(i)}
+          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+            currentPage === i
+              ? isDark
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : 'bg-blue-500 border-blue-500 text-white'
+              : isDark
+                ? 'border-gray-700 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {i}
+        </button>
+      );
+    }
+
+    // Add last page and ellipsis
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        buttons.push(
+          <span key="end-ellipsis" className="relative inline-flex items-center px-4 py-2 text-sm text-gray-500">
+            ...
+          </span>
+        );
+      }
+      buttons.push(
+        <button
+          key={totalPages}
+          onClick={() => handlePageChange(totalPages)}
+          className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
+            currentPage === totalPages
+              ? isDark
+                ? 'bg-blue-600 border-blue-600 text-white'
+                : 'bg-blue-500 border-blue-500 text-white'
+              : isDark
+                ? 'border-gray-700 bg-gray-700 text-gray-300 hover:bg-gray-600'
+                : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          {totalPages}
+        </button>
+      );
+    }
+
+    return buttons;
   };
 
   return (
@@ -255,30 +363,62 @@ const Material = () => {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  {/* Total Materials Card */}
           <div className={`p-4 rounded-xl shadow ${
-            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            isDark 
+              ? 'bg-blue-900/30 border border-blue-800' 
+              : 'bg-blue-50 border border-blue-100'
           }`}>
-            <h3 className="text-sm font-medium text-gray-500">Total Materials</h3>
-            <p className="text-2xl font-bold mt-1">{filteredMaterials.length}</p>
+            <h3 className={`text-sm font-medium ${
+              isDark ? 'text-blue-300' : 'text-blue-600'
+            }`}>
+              Total Materials
+            </h3>
+            <p className={`text-2xl font-bold mt-1 ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
+              {filteredMaterials.length}
+            </p>
           </div>
-          
+
+          {/* Total Items Card */}
           <div className={`p-4 rounded-xl shadow ${
-            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            isDark 
+              ? 'bg-green-900/30 border border-green-800' 
+              : 'bg-green-50 border border-green-100'
           }`}>
-            <h3 className="text-sm font-medium text-gray-500">Total Items</h3>
-            <p className="text-2xl font-bold mt-1">
+            <h3 className={`text-sm font-medium ${
+              isDark ? 'text-green-300' : 'text-green-600'
+            }`}>
+              Total Items
+            </h3>
+            <p className={`text-2xl font-bold mt-1 ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
               {filteredMaterials.reduce((sum, item) => sum + (item.qty || item.quantity || 0), 0)}
             </p>
           </div>
-          
+
+          {/* Total Value Card */}
           <div className={`p-4 rounded-xl shadow ${
-            isDark ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'
+            isDark 
+              ? 'bg-purple-900/30 border border-purple-800' 
+              : 'bg-purple-50 border border-purple-100'
           }`}>
-            <h3 className="text-sm font-medium text-gray-500">Total Inventory Value</h3>
-            <p className="text-2xl font-bold mt-1">${calculateTotalValue()}</p>
+            <h3 className={`text-sm font-medium ${
+              isDark ? 'text-purple-300' : 'text-purple-600'
+            }`}>
+              Total Value
+            </h3>
+            <p className={`text-2xl font-bold mt-1 ${
+              isDark ? 'text-white' : 'text-gray-900'
+            }`}>
+              ${calculateTotalValue()}
+            </p>
           </div>
         </div>
+
 
         {/* Materials Table */}
         <div className={`rounded-xl shadow-lg overflow-hidden ${
@@ -350,15 +490,15 @@ const Material = () => {
                           </div>
                         </td>
                        
-                       <td className="px-6 py-4 whitespace-nowrap max-w-xs">
-                        <div className="text-sm font-medium truncate max-w-xs">
+                        <td className="px-6 py-4 whitespace-nowrap max-w-xs">
+                          <div className="text-sm font-medium truncate max-w-xs">
                             {item.description || <span className="italic text-gray-400">No description</span>}
-                        </div>
+                          </div>
                         </td>
-                       <td className="px-6 py-4 whitespace-nowrap max-w-xs">
-                        <div className="text-sm font-medium truncate max-w-xs">
+                        <td className="px-6 py-4 whitespace-nowrap max-w-xs">
+                          <div className="text-sm font-medium truncate max-w-xs">
                             {item.date || <span className="italic text-gray-400">No Date</span>}
-                        </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                           ${Number(item.price).toFixed(2)}
@@ -381,7 +521,7 @@ const Material = () => {
               } sm:px-6`}>
                 <div className="flex-1 flex justify-between sm:hidden">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
                     className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${
                       isDark 
@@ -392,7 +532,7 @@ const Material = () => {
                     Previous
                   </button>
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className={`ml-3 relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${
                       isDark 
@@ -416,7 +556,7 @@ const Material = () => {
                   <div>
                     <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
                       <button
-                        onClick={() => setCurrentPage(1)}
+                        onClick={() => handlePageChange(1)}
                         disabled={currentPage === 1}
                         className={`relative inline-flex items-center px-2 py-2 rounded-l-md border ${
                           isDark 
@@ -429,7 +569,7 @@ const Material = () => {
                         <ChevronLeft className="h-5 w-5 -ml-2" />
                       </button>
                       <button
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
                         className={`relative inline-flex items-center px-2 py-2 border ${
                           isDark 
@@ -441,39 +581,10 @@ const Material = () => {
                         <ChevronLeft className="h-5 w-5" />
                       </button>
                       
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNum;
-                        if (totalPages <= 5) {
-                          pageNum = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNum = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNum = totalPages - 4 + i;
-                        } else {
-                          pageNum = currentPage - 2 + i;
-                        }
-                        
-                        return (
-                          <button
-                            key={pageNum}
-                            onClick={() => handlePageChange(pageNum)}
-                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                              currentPage === pageNum
-                                ? isDark
-                                  ? 'bg-blue-600 border-blue-600 text-white'
-                                  : 'bg-blue-500 border-blue-500 text-white'
-                                : isDark
-                                  ? 'border-gray-700 bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                  : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                            }`}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
+                      {getPaginationButtons()}
                       
                       <button
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
                         className={`relative inline-flex items-center px-2 py-2 border ${
                           isDark 
@@ -485,7 +596,7 @@ const Material = () => {
                         <ChevronRight className="h-5 w-5" />
                       </button>
                       <button
-                        onClick={() => setCurrentPage(totalPages)}
+                        onClick={() => handlePageChange(totalPages)}
                         disabled={currentPage === totalPages}
                         className={`relative inline-flex items-center px-2 py-2 rounded-r-md border ${
                           isDark 

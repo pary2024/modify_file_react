@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet } from "react-router";
 
 const PrivateRoute = ({ requiredRole, children }) => {
   const token = localStorage.getItem("token");
@@ -19,5 +19,4 @@ const PrivateRoute = ({ requiredRole, children }) => {
   // If children exist (e.g. direct element usage), render them.
   return  <Outlet />;
 };
-
 export default PrivateRoute;

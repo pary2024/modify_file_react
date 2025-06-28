@@ -233,7 +233,7 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
 
   const [patient_id, setPatient] = useState("");
   const [phone, setPhone] = useState("");
- const [doctor_id, setDoctor] = useState("");
+ const  [doctor_id, setDoctor] = useState("");
   const [price, setPrice] = useState(0);
   const [pay_id, setMethod] = useState("");
   const [deposit, setDeposit] = useState(0);
@@ -261,7 +261,16 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
       await dispatch(createInvoicePatient(data));
       dispatch(fetchInvoicePatients());
       toast.success('Payment created successfully!', { position: "top-right" });
-      
+      setPatient('');
+      setPhone('');
+      setDoctor('');
+      setPrice(0);
+      setMethod('');
+      setDeposit(0);
+      setTotal(0);
+      setDebt(0);
+      setStatus('');
+
       onClose();
     } catch (e) {
       toast.error(`Error creating payment: ${e.message}`, { position: "top-right" });
@@ -283,7 +292,7 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       data-aos="zoom-in"
     >
-       <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
+       
       <div
         className={`rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto ${
           isDark ? "bg-gray-800 text-gray-100" : "bg-white text-gray-800"
@@ -898,6 +907,7 @@ const Payment = () => {
         isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
       }`}
     >
+      <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
       {selectedPayment ? (
         <Invoice
           payment={selectedPayment}

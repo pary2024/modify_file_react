@@ -121,7 +121,7 @@ const Doctor = () => {
   const handleDelete = async (id) =>{
     try{
       await dispatch(deleteDoctor(id))
-      showAlert("doctor was delete successfully")
+      toast.success('Doctor deleted successfully!', { position: "top-right" });
       dispatch(fetchDoctors());
     }catch(e){
       console.log(e);

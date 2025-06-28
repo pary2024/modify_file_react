@@ -11,6 +11,9 @@ import { fetchDoctors } from "../stores/doctorSlice";
 import { fetchPatients } from "../stores/patientSlice";
 import { fetchAppointmentPatients } from "../stores/appointmentPatientSlice";
 import { fetchInvoicePatients } from "../stores/invoicePatientSlice";
+import { fetchDutys } from "../stores/dutyDoctorSlice";
+import { fetchMaterials } from "../stores/materialSlice";
+import { fetchLabs } from "../stores/labSlice";
 
 const Dash = () => {
   const { isDark } = useContext(ThemeContext);
@@ -20,13 +23,30 @@ const Dash = () => {
   const { patients } = useSelector((state) => state.patient);
   const { appointmentPatients } = useSelector((state) => state.appointmentPatient);
   const { invoicePatients } = useSelector((state) => state.invoicePatient);
+  const {duties}  = useSelector((stats)=> stats.duty);
+  const {materials} = useSelector((stats)=> stats.material);
+  const {labs}   =  useSelector((stats)=> stats.lab);
 
   useEffect(() => {
     dispatch(fetchDoctors());
     dispatch(fetchPatients());
     dispatch(fetchAppointmentPatients());
     dispatch(fetchInvoicePatients());
+    dispatch(fetchDutys());
+    dispatch(fetchMaterials());
+    dispatch(fetchLabs());
   }, [dispatch]);
+
+  
+  const totalMaterial = materials.reduce((acc, material) => acc + material.total, 0);
+  
+  const totalLab = labs.reduce((acc, lab) => acc + lab.total, 0);
+
+
+
+  
+  
+  
 
   const stats = [
     { 
@@ -67,8 +87,8 @@ const Dash = () => {
     },
     { 
       icon: <FaProcedures size={20} />, 
-      label: "Procedures", 
-      value: 17, 
+      label: "Duty Of Doctor", 
+      value: duties.length, 
       bg: "bg-gradient-to-r from-purple-500 to-purple-600",
       trend: "steady",
       change: "0%",
@@ -76,13 +96,41 @@ const Dash = () => {
     },
     { 
       icon: <FaChartLine size={20} />, 
-      label: "Revenue", 
-      value: "$24,580", 
+      label: "Material of Clinic", 
+      value: materials.length, 
       bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
       trend: "up",
       change: "22%",
       path: "/admin/revenue"
-    }
+    },
+    { 
+      icon: <FaChartLine size={20} />, 
+      label: "Lab Of clinic", 
+      value: labs.length, 
+      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+      trend: "up",
+      change: "22%",
+      path: "/admin/revenue"
+    },
+    { 
+      icon: <FaChartLine size={20} />, 
+      label: "Revenue", 
+      value: totalMaterial, 
+      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+      trend: "up",
+      change: "22%",
+      path: "/admin/revenue"
+    },
+    { 
+      icon: <FaChartLine size={20} />, 
+      label: "Revenue", 
+      value: totalLab, 
+      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+      trend: "up",
+      change: "22%",
+      path: "/admin/revenue"
+    },
+    
   ];
 
   const handleStatClick = (path) => {
