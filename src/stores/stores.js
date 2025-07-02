@@ -15,7 +15,7 @@ import dutyDoctorReducer from "./dutyDoctorSlice";
 import labReducer from "./labSlice";
 import materialReducer from "./materialSlice";
 
-const store = configureStore({
+const stores = configureStore({
   reducer: {
     auth: authReducer, 
     user: userReducer, 
@@ -34,4 +34,4 @@ const store = configureStore({
   },
 });
 
-export default store;
+export default stores;
