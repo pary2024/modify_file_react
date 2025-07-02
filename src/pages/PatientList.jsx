@@ -63,6 +63,7 @@ export default function PatientList() {
   const dispatch = useDispatch();
   const { patients, status, error } = useSelector((state) => state.patient);
   const { provinces } = useSelector((state) => state.province);
+  const { treats } = useSelector((state) => state.treat);
   const [editingId, setEditingId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -76,7 +77,7 @@ export default function PatientList() {
   const [gender, setGender] = useState("male");
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(3);
+  const [itemsPerPage] = useState(7);
  
 
   useEffect(() => {
@@ -223,271 +224,92 @@ export default function PatientList() {
 
  
 
-  const handlePrintInvoice = (patient, settings = {}) => {
-    const {
-      paperSize = 'A4',
-      orientation = 'portrait'
-    } = settings;
+ // Pass full patient list and current patient to this function
+const handlePrintWaitingNumber = (patient, allPatients) => {
+  const sortedPatients = allPatients
+    .filter(p => p.created_at) // only registered patients
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-    const provinceName = provinces.find((prov) => prov.id === patient.province_id)?.name || patient.province || "N/A";
-    const treatmentName = treats.find((t) => t.id === patient.treat_id)?.name || patient.disease || "N/A";
-    const rawDate = patient.created_at || patient.create_at || new Date().toISOString();
-    const invoiceDate = dayjs(rawDate).format("YYYY-MM-DD HH:mm:ss");
+  const index = sortedPatients.findIndex(p => p.id === patient.id);
+  const waitingNumber = index !== -1 ? index + 1 : `#`;
 
-    const paperSizes = {
-      A4: { width: "210mm", height: "297mm" },
-      Letter: { width: "215.9mm", height: "279.4mm" },
-    };
-    const selectedPaper = paperSizes[paperSize] || paperSizes.A4;
+  const date = dayjs(patient.created_at || patient.create_at || new Date()).format("YYYY-MM-DD HH:mm");
 
-    const invoiceWindow = window.open("", "_blank");
-    invoiceWindow.document.write(`
-      <html>
-        <head>
-          <title>Dental Invoice - DT${patient.id}</title>
-          <style>
-            :root {
-              --primary-color: #2c7be5;
-              --secondary-color: #6c757d;
-              --border-color: #e9ecef;
-              --light-bg: #f8f9fa;
-            }
-            body { 
-              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-              margin: 0; 
-              padding: 0;
-              color: #333;
-              line-height: 1.6;
-            }
-            .invoice-container { 
-              max-width: ${orientation === "landscape" ? "297mm" : "210mm"}; 
-              width: ${selectedPaper.width};
-              height: ${selectedPaper.height};
-              margin: 10mm auto; 
-              padding: 15mm;
-              box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-              border-radius: 8px;
-              box-sizing: border-box;
-            }
-            .header { 
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 30px;
-              padding-bottom: 20px;
-              border-bottom: 1px solid var(--border-color);
-            }
-            .clinic-info h1 {
-              color: var(--primary-color);
-              margin: 0;
-              font-size: 28px;
-            }
-            .clinic-info p {
-              margin: 5px 0;
-              color: var(--secondary-color);
-            }
-            .invoice-meta {
-              text-align: right;
-            }
-            .invoice-title {
-              font-size: 24px;
-              font-weight: 600;
-              margin-bottom: 5px;
-            }
-            .invoice-number {
-              color: var(--secondary-color);
-              font-size: 16px;
-            }
-            .section {
-              margin-bottom: 30px;
-            }
-            .section-title {
-              font-size: 18px;
-              font-weight: 600;
-              color: var(--primary-color);
-              margin-bottom: 15px;
-              padding-bottom: 8px;
-              border-bottom: 1px solid var(--border-color);
-            }
-            .patient-details {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 15px;
-            }
-            .detail-item {
-              margin-bottom: 10px;
-            }
-            .detail-label {
-              font-weight: 600;
-              display: block;
-              margin-bottom: 3px;
-              color: var(--secondary-color);
-            }
-            .detail-value {
-              font-size: 16px;
-            }
-            .treatment-table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 15px;
-            }
-            .treatment-table th {
-              background-color: var(--primary-color);
-              color: white;
-              padding: 12px;
-              text-align: left;
-            }
-            .treatment-table td {
-              padding: 12px;
-              border-bottom: 1px solid var(--border-color);
-            }
-            .treatment-table tr:nth-child(even) {
-              background-color: var(--light-bg);
-            }
-            .total-section {
-              text-align: right;
-              margin-top: 20px;
-            }
-            .total-amount {
-              font-size: 20px;
-              font-weight: 600;
-            }
-            .footer {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 1px solid var(--border-color);
-              text-align: center;
-              color: var(--secondary-color);
-              font-size: 14px;
-            }
-            .action-buttons {
+  const printWindow = window.open("", "_blank");
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Waiting Number</title>
+        <style>
+          * { box-sizing: border-box; }
+          html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+          }
+          .waiting-box {
+            border: 2px dashed #333;
+            padding: 40px 20px;
+            max-width: 300px;
+            width: 100%;
+          }
+          .clinic-name {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #555;
+          }
+          .waiting-number {
+            font-size: 64px;
+            font-weight: bold;
+            margin: 30px 0;
+            color: #000;
+          }
+          .timestamp {
+            font-size: 14px;
+            color: #888;
+          }
+          @media print {
+            @page { size: A4 portrait; margin: 0; }
+            html, body {
+              height: 100vh;
+              width: 100vw;
               display: flex;
               justify-content: center;
-              gap: 15px;
-              margin-top: 30px;
+              align-items: center;
             }
-            .btn {
-              padding: 10px 20px;
+            .waiting-box {
               border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-weight: 600;
-              transition: all 0.3s;
+              padding: 0;
             }
-            .btn-print {
-              background-color: var(--primary-color);
-              color: white;
-            }
-            .btn-close {
-              background-color: var(--secondary-color);
-              color: white;
-            }
-            .btn:hover {
-              opacity: 0.9;
-              transform: translateY(-2px);
-            }
-            @media print {
-              @page {
-                size: ${paperSize} ${orientation};
-                margin: 10mm;
-              }
-              .action-buttons {
-                display: none;
-              }
-              body {
-                padding: 0;
-                margin: 0;
-              }
-              .invoice-container {
-                box-shadow: none;
-                margin: 0;
-                padding: 10mm;
-                width: 100%;
-                height: auto;
-              }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-container">
-            <div class="header">
-              <div class="clinic-info">
-                <h1>BrightSmile Dental Clinic</h1>
-                <p>123 Dental Street, Health District</p>
-                <p>Phone: (123) 456-7890 | Email: info@brightsmile.com</p>
-              </div>
-              <div class="invoice-meta">
-                <div class="invoice-title">Treatment Invoice</div>
-                <div class="invoice-number">#DT${patient.id}</div>
-                <div>Date: ${invoiceDate}</div>
-              </div>
-            </div>
-            <div class="section">
-              <div class="section-title">Patient Information</div>
-              <div class="patient-details">
-                <div class="detail-item">
-                  <span class="detail-label">Full Name</span>
-                  <span class="detail-value">${patient.name}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Age</span>
-                  <span class="detail-value">${patient.age}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Gender</span>
-                  <span class="detail-value">${patient.gender}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Phone Number</span>
-                  <span class="detail-value">${patient.phone}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Occupation</span>
-                  <span class="detail-value">${patient.career}</span>
-                </div>
-                <div class="detail-item">
-                  <span class="detail-label">Province</span>
-                  <span class="detail-value">${provinceName}</span>
-                </div>
-              </div>
-            </div>
-            <div class="section">
-              <div class="section-title">Treatment Details</div>
-              <table class="treatment-table">
-                <thead>
-                  <tr>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>${treatmentName}</td>
-                    <td>${patient.status}</td>
-                    <td>$150.00</td>
-                  </tr>
-                </tbody>
-              </table>
-              <div class="total-section">
-                <div class="total-amount">Total: $150.00</div>
-              </div>
-            </div>
-            <div class="footer">
-              <p>Thank you for choosing BrightSmile Dental Clinic</p>
-              <p>Please bring this invoice for your next appointment</p>
-              <p>For any inquiries, please contact our office</p>
-            </div>
-            <div class="action-buttons">
-              <button class="btn btn-print" onclick="window.print()">Print Invoice</button>
-              <button class="btn btn-close" onclick="window.close()">Close Window</button>
-            </div>
-          </div>
-        </body>
-      </html>
-    `);
-    invoiceWindow.document.close();
-  };
+          }
+        </style>
+      </head>
+      <body>
+        <div class="waiting-box">
+          <div class="clinic-name">BrightSmile Dental Clinic</div>
+          <div class="waiting-number">${waitingNumber}</div>
+          <div class="timestamp">${date}</div>
+        </div>
+        <script>
+          window.onload = function () {
+            window.print();
+            setTimeout(() => window.close(), 500);
+          };
+        </script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
+
+
 
   const exportToExcel = () => {
     const dataForExport = filteredPatients.map((patient) => ({
@@ -693,9 +515,9 @@ export default function PatientList() {
         }`}
       >
         <div
-          className={`p-6 ${isDark ? "bg-gray-700" : "bg-blue-600"} text-white`}
+          className={`p-6 ${isDark ? "bg-gray-700" : "bg-white-600"} text-white`}
         >
-          <h1 className="text-3xl font-bold flex items-center gap-3">
+          <h1 className="text-3xl text-black font-bold flex items-center gap-3">
             <UserCircleIcon className="w-8 h-8" />
             Patient Management System
           </h1>
@@ -972,17 +794,18 @@ export default function PatientList() {
                           >
                             <PencilIcon className="w-4 h-4" />
                           </button>
-                          <button
-                            onClick={() => handlePrintInvoice(p)}
+                         <button
+                            onClick={() => handlePrintWaitingNumber(p, patients)}
                             className={`p-2 rounded-full ${
                               isDark
                                 ? "text-green-400 hover:bg-gray-700"
                                 : "text-green-600 hover:bg-green-50"
                             } transition`}
-                            title="Print Invoice"
+                            title="Print Waiting Number"
                           >
                             <PrinterIcon className="w-4 h-4" />
                           </button>
+
                           <button
                             onClick={() => handleDelete(p.id)}
                             className={`p-2 rounded-full ${

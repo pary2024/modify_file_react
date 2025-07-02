@@ -3,7 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { ThemeContext } from "../colors/Thems";
 import {
   FaUserMd, FaUsers, FaFileInvoiceDollar, FaCalendarAlt,
-  FaProcedures, FaChartLine,FaSearch,FaBell,FaUserCircle
+  FaProcedures, FaChartLine,FaSearch,FaBell,FaUserCircle,
+ 
+ 
+  FaCalendarCheck,
+  FaBriefcaseMedical,
+  FaBoxes,
+  FaFlask,
+  FaMoneyBillWave,
+  FaMicroscope,
 } from 'react-icons/fa';
 import { MdDashboard } from 'react-icons/md';
 import { useDispatch, useSelector } from "react-redux";
@@ -36,102 +44,89 @@ const Dash = () => {
     dispatch(fetchMaterials());
     dispatch(fetchLabs());
   }, [dispatch]);
+  const totalMaterial = materials.reduce((acc, material) => {
+  const qty = material.qty || material.quantity || 0;
+  return acc + (material.price * qty);
+}, 0);
 
+const totalLab = labs.reduce((acc, lab) => {
+  const qty = lab.qty || lab.quantity || 0;
+  return acc + (lab.price * qty);
+}, 0);
   
-  const totalMaterial = materials.reduce((acc, material) => acc + material.total, 0);
-  
-  const totalLab = labs.reduce((acc, lab) => acc + lab.total, 0);
-
-
-
-  
-  
-  
-
-  const stats = [
-    { 
-      icon: <FaUserMd size={20} />, 
-      label: "Doctors", 
-      value: doctors?.length || 0,  
-      bg: "bg-gradient-to-r from-teal-500 to-teal-600",
-      trend: "up",
-      change: "12%",
-      path: "/admin/doctor"
-    },
-    { 
-      icon: <FaUsers size={20} />, 
-      label: "Patients", 
-      value: patients?.length || 0, 
-      bg: "bg-gradient-to-r from-blue-500 to-blue-600",
-      trend: "up",
-      change: "8%",
-      path: "/admin/list"
-    },
-    { 
-      icon: <FaFileInvoiceDollar size={20} />, 
-      label: "Invoices", 
-      value: invoicePatients?.length || 0, 
-      bg: "bg-gradient-to-r from-cyan-500 to-cyan-600",
-      trend: "down",
-      change: "3%",
-      path: "/admin/payment/patient"
-    },
-    { 
-      icon: <FaCalendarAlt size={20} />, 
-      label: "Appointments", 
-      value: appointmentPatients?.length || 0, 
-      bg: "bg-gradient-to-r from-violet-500 to-violet-600",
-      trend: "up",
-      change: "15%",
-      path: "/admin/appoint/patient"
-    },
-    { 
-      icon: <FaProcedures size={20} />, 
-      label: "Duty Of Doctor", 
-      value: duties.length, 
-      bg: "bg-gradient-to-r from-purple-500 to-purple-600",
-      trend: "steady",
-      change: "0%",
-      path: "/admin/procedures"
-    },
-    { 
-      icon: <FaChartLine size={20} />, 
-      label: "Material of Clinic", 
-      value: materials.length, 
-      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
-      trend: "up",
-      change: "22%",
-      path: "/admin/revenue"
-    },
-    { 
-      icon: <FaChartLine size={20} />, 
-      label: "Lab Of clinic", 
-      value: labs.length, 
-      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
-      trend: "up",
-      change: "22%",
-      path: "/admin/revenue"
-    },
-    { 
-      icon: <FaChartLine size={20} />, 
-      label: "Revenue", 
-      value: totalMaterial, 
-      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
-      trend: "up",
-      change: "22%",
-      path: "/admin/revenue"
-    },
-    { 
-      icon: <FaChartLine size={20} />, 
-      label: "Revenue", 
-      value: totalLab, 
-      bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
-      trend: "up",
-      change: "22%",
-      path: "/admin/revenue"
-    },
-    
-  ];
+const stats = [
+  {
+    icon: <FaUserMd size={20} />,
+    label: "Doctors",
+    value: doctors?.length || 0,
+    bg: "bg-gradient-to-r from-teal-500 to-teal-600",
+    path: "/admin/doctor",
+  },
+  {
+    icon: <FaUsers size={20} />,
+    label: "Patients",
+    value: patients?.length || 0,
+    bg: "bg-gradient-to-r from-blue-500 to-blue-600",
+   
+    path: "/admin/list",
+  },
+  {
+    icon: <FaFileInvoiceDollar size={20} />,
+    label: "Invoices",
+    value: invoicePatients?.length || 0,
+    bg: "bg-gradient-to-r from-cyan-500 to-cyan-600",
+   
+    path: "/admin/payment/patient",
+  },
+  {
+    icon: <FaCalendarCheck size={20} />,
+    label: "Appointments",
+    value: appointmentPatients?.length || 0,
+    bg: "bg-gradient-to-r from-violet-500 to-violet-600",
+   
+    path: "/admin/appoint/patient",
+  },
+  {
+    icon: <FaBriefcaseMedical size={20} />,
+    label: "Duty Of Doctor",
+    value: duties.length,
+    bg: "bg-gradient-to-r from-purple-500 to-purple-600",
+   
+    path: "/admin/dutyDoctor",
+  },
+  {
+    icon: <FaBoxes size={20} />,
+    label: "Material of Clinic",
+    value: materials.length,
+    bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+   
+    path: "/admin/material",
+  },
+  {
+    icon: <FaFlask size={20} />,
+    label: "Lab Of Clinic",
+    value: labs.length,
+    bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+   
+    path: "/admin/lab",
+  },
+  {
+    icon: <FaMoneyBillWave size={20} />,
+    label: "Expend Material",
+    value: totalMaterial,
+    bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+   
+    path: "/admin/report",
+  },
+  {
+    icon: <FaMicroscope size={20} />,
+    label: "Expend Lab",
+    value: totalLab,
+    bg: "bg-gradient-to-r from-emerald-500 to-emerald-600",
+   
+    path: "/admin/report",
+  },
+];
 
   const handleStatClick = (path) => {
     navigate(path);
@@ -188,13 +183,13 @@ const Dash = () => {
               <div className={`${stat.bg} text-white p-2 rounded-lg flex items-center shadow-md`}>
                 {stat.icon}
               </div>
-              <span className={`text-xs px-2 py-1 rounded-full ${
+              {/* <span className={`text-xs px-2 py-1 rounded-full ${
                 stat.trend === "up" ? "bg-green-100 text-green-800" : 
                 stat.trend === "down" ? "bg-red-100 text-red-800" : 
                 "bg-gray-100 text-gray-800"
               }`}>
                 {stat.change} {stat.trend === "up" ? "↑" : stat.trend === "down" ? "↓" : "→"}
-              </span>
+              </span> */}
             </div>
             <div className="flex-1">
               <div className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-500"} uppercase tracking-wider`}>

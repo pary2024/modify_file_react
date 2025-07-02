@@ -18,7 +18,7 @@ import {
   MdSms,
   MdSettings,
   MdLogout,
-   MdSchool, MdMap, MdHealing,MdBusiness
+   MdSchool, MdMap, MdHealing,MdBusiness,MdScience, MdBuild, MdBiotech, MdWork
 } from "react-icons/md";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -56,6 +56,20 @@ const Sidebar = () => {
     { label: "Dashboard", icon: <MdDashboard />, href: "/admin" },
     // { label: "Departments", icon: <MdApartment />, href: "/admin/department" },
     { label: "Patient", icon: <MdPerson />, href: "/admin/list" },
+    { label: "Duty", icon: <MdWork />, href: "/admin/dutyDoctor" }, 
+    {
+      label: "Doctor",
+      icon: <FaUserMd />,
+      href: "/admin/doctor",
+    },
+    {
+      label: "Treatment",
+      icon: <MdHealing />,
+      href: "/admin/treat",
+    },
+    { label: "Material", icon: <MdBuild />, href: "/admin/material" },     // Material -> tools/building
+    { label: "Lab", icon: <MdBiotech />, href: "/admin/lab" },             // Lab -> biotech/test
+    { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
     // { label: "Student", icon: <FaUserGraduate />, href: "/admin/student" },
     // { label: "Human Resources", icon: <MdPeopleAlt />, href: "/admin/human" },
     // {
@@ -63,24 +77,15 @@ const Sidebar = () => {
     //   icon: <MdAttachMoney />,
     //   href: "/admin/finance",
     // },
-    { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
     // { label: "SMS", icon: <MdSms />, href: "/admin/sms" },
-    { label: "Method", icon: <MdSms />, href: "/admin/method" },
-    { label: "Metarial", icon: <MdSms />, href: "/admin/material" },
-    { label: "Lab", icon: <MdSms />, href: "/admin/lab" },
-    { label: "Duty", icon: <MdSms />, href: "/admin/dutyDoctor" },
-
+    
     // Admin-only routes
     {
       label: "User",
       icon: <RiMedicineBottleLine />,
       href: "/admin/user",
     },
-    {
-      label: "Doctor",
-      icon: <FaUserMd />,
-      href: "/admin/doctor",
-    },
+    { label: "Method", icon: <MdScience />, href: "/admin/method" },       // Method -> science/research
     // {
     //   label: "School",
     //   icon: <MdSchool />,
@@ -90,11 +95,6 @@ const Sidebar = () => {
       label: "Province",
       icon: <MdMap />,
       href: "/admin/province",
-    },
-    {
-      label: "Treatment",
-      icon: <MdHealing />,
-      href: "/admin/treat",
     },
     {
       label: "Company",
@@ -123,7 +123,7 @@ const Sidebar = () => {
   return (
     <div className={`flex h-screen font-sans ${isDark ? "dark" : ""}`}>
       {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-blue-800 to-blue-900 text-white p-4 overflow-y-auto flex flex-col shadow-xl">
+      <div className="w-64 bg-gradient-to-b from-white-800 to-white-900 text-black p-4 overflow-y-auto flex flex-col shadow-xl">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8 pt-4">
           <div className="bg-white p-2 rounded-full shadow-lg mb-3">
@@ -148,8 +148,8 @@ const Sidebar = () => {
                 to={item.href}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
                   isActive(item.href)
-                    ? "bg-blue-600 shadow-md"
-                    : "hover:bg-blue-700 hover:shadow-md"
+                    ? "bg-blue-400 shadow-md"
+                    : "hover:bg-blue-300 hover:shadow-md"
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
@@ -164,8 +164,8 @@ const Sidebar = () => {
               onClick={() => setShowAppointmentDropdown((prev) => !prev)}
               className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
                 location.pathname.includes("/admin/appoint")
-                  ? "bg-blue-600 shadow-md"
-                  : "hover:bg-blue-700 hover:shadow-md"
+                  ? "bg-blue-400 shadow-md"
+                  : "hover:bg-blue-300 hover:shadow-md"
               }`}
             >
               <span className="flex items-center gap-3">
@@ -181,8 +181,8 @@ const Sidebar = () => {
                     to="/admin/appoint/patient"
                     className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
                       isActive("/admin/appoint/patient")
-                        ? "bg-blue-500 shadow"
-                        : "hover:bg-blue-600 hover:shadow"
+                        ? "bg-blue-400 shadow"
+                        : "hover:bg-blue-300 hover:shadow"
                     }`}
                   >
                     <span className="text-sm">Patient Appointments</span>
@@ -199,8 +199,8 @@ const Sidebar = () => {
               onClick={() => setShowPaymentDropdown((prev) => !prev)}
               className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
                 location.pathname.includes("/admin/payment")
-                  ? "bg-blue-600 shadow-md"
-                  : "hover:bg-blue-700 hover:shadow-md"
+                  ? "bg-blue-400 shadow-md"
+                  : "hover:bg-blue-300 hover:shadow-md"
               }`}
             >
               <span className="flex items-center gap-3">
@@ -216,8 +216,8 @@ const Sidebar = () => {
                     to="/admin/payment/patient"
                     className={`flex items-center gap-3 p-2 pl-4 rounded-lg transition-all ${
                       isActive("/admin/payment/patient")
-                        ? "bg-blue-500 shadow"
-                        : "hover:bg-blue-600 hover:shadow"
+                        ? "bg-blue-400 shadow"
+                        : "hover:bg-blue-300 hover:shadow"
                     }`}
                   >
                     <span className="text-sm">Reception</span>
@@ -231,13 +231,7 @@ const Sidebar = () => {
 
         {/* Bottom Settings/Profile */}
         <div className="mt-auto pt-4 border-t border-blue-700">
-          <Link
-            to="/admin/settings"
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-700 transition-all"
-          >
-            <MdSettings className="text-lg" />
-            <span>Settings</span>
-          </Link>
+         
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-700 transition-all w-full"

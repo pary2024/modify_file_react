@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { ThemeContext } from '../colors/Thems';
-import { Line, PolarArea, Doughnut, Bar,Pie } from 'react-chartjs-2';
+import { Line, PolarArea, Doughnut, Bar, Pie,Radar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   PointElement,
@@ -34,87 +34,50 @@ ChartJS.register(
 
 const Report = () => {
   const { isDark } = useContext(ThemeContext);
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
   const dispatch = useDispatch();
-  const {data} = useSelector((state)=>state.report);
-  useEffect(()=>{
-    dispatch(fetchReports());
-  },[dispatch])
+  const { data } = useSelector((state) => state.report);
   
+  useEffect(() => {
+    dispatch(fetchReports());
+  }, [dispatch]);
 
-  // Sample data - in a real app, this would come from an API
-  const stats = {
-    totalAppointments: 52,
-    completed: 40,
-    pending: 12,
-    revenue: 2600,
-    monthlyData: [12, 19, 15, 8, 10, 12, 15, 18, 14, 16, 20, 22],
-    services: [
-      { name: 'Cleaning', count: 18 },
-      { name: 'Filling', count: 12 },
-      { name: 'Extraction', count: 8 },
-      { name: 'Checkup', count: 14 },
-    ],
-    patientAgeGroups: [
-      { range: '0-18', count: 8 },
-      { range: '19-30', count: 15 },
-      { range: '31-45', count: 12 },
-      { range: '46-60', count: 10 },
-      { range: '60+', count: 7 },
-    ],
-  };
+  // Extracted data from API response
+  const invoiceChart = data?.invoices?.map(invoice => invoice.total) || [];
+  const pendChart = data?.invoices?.map(invoice => invoice.debt) || [];
+  const labChart = data?.labs?.map(lab => lab.price) || [];
+  const materialChart = data?.materials?.map(material => material.price) || [];
 
-  const handleGenerateReport = () => {
-    console.log('Generate report from', startDate, 'to', endDate);
-    // In a real app, you would fetch data based on these dates
-  };
+  // Process patient data for histogram (count occurrences of each name)
+  const patientCounts = invoiceChart.reduce((acc, name) => {
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
+  const debtCounts = pendChart.reduce((acc, name) => {
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
 
-  // Line Chart Data - Appointments Status
-  const lineData = {
-    labels: ['Completed', 'Pending'],
+  // Patient Histogram Data
+  const patientHistogramData = {
+    labels: Object.keys(patientCounts),
     datasets: [
       {
-        label: 'Appointments',
-        data: [stats.completed, stats.pending],
-        backgroundColor: isDark ? '#4ade80' : '#10b981',
-        borderColor: isDark ? '#4ade80' : '#10b981',
-        pointBackgroundColor: isDark ? '#4ade80' : '#10b981',
-        pointBorderColor: isDark ? '#1f2937' : '#fff',
-        pointHoverBackgroundColor: isDark ? '#86efac' : '#34d399',
-        pointHoverBorderColor: isDark ? '#1f2937' : '#fff',
+        label: 'Patient Visits',
+        data: Object.values(patientCounts),
+        backgroundColor: isDark ? 'rgba(59, 130, 246, 0.7)' : 'rgba(59, 130, 246, 0.5)',
+        borderColor: isDark ? '#3b82f6' : '#1d4ed8',
         borderWidth: 2,
-        pointRadius: 5,
-        pointHoverRadius: 7,
-        fill: false,
-        tension: 0.4,
+        borderRadius: 4,
+        hoverBackgroundColor: isDark ? '#3b82f6' : '#2563eb',
       },
     ],
   };
-
-  // Polar Area Chart Data - Appointments Distribution
-  const polarData = {
-    labels: ['Completed', 'Pending'],
+  const debtHistogramData = {
+    labels: Object.keys(debtCounts),
     datasets: [
       {
-        data: [stats.completed, stats.pending],
-        backgroundColor: [
-          isDark ? 'rgba(96, 165, 250, 0.7)' : 'rgba(59, 130, 246, 0.7)',
-          isDark ? 'rgba(248, 113, 113, 0.7)' : 'rgba(239, 68, 68, 0.7)',
-        ],
-        borderColor: isDark ? '#1f2937' : '#fff',
-        borderWidth: 2,
-      },
-    ],
-  };
-
-  // Monthly Appointments Data
-  const monthlyData = {
-    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-    datasets: [
-      {
-        label: 'Appointments',
-        data: stats.monthlyData,
+        label: 'Patient Visits',
+        data: Object.values(debtCounts),
         backgroundColor: isDark ? 'rgba(59, 130, 246, 0.7)' : 'rgba(59, 130, 246, 0.5)',
         borderColor: isDark ? '#3b82f6' : '#1d4ed8',
         borderWidth: 2,
@@ -124,44 +87,44 @@ const Report = () => {
     ],
   };
 
-  // Services Distribution Data
-  const servicesData = {
-    labels: stats.services.map(service => service.name),
+  // Lab Polar Area Chart Data
+  const labPolarData = {
+    labels: labChart.map((_, index) => `Lab Test ${index + 1}`),
     datasets: [
       {
-        data: stats.services.map(service => service.count),
-        backgroundColor: [
-          isDark ? '#8b5cf6' : '#7c3aed',
-          isDark ? '#ec4899' : '#db2777',
-          isDark ? '#14b8a6' : '#0d9488',
-          isDark ? '#f97316' : '#ea580c',
-        ],
+        data: labChart,
+        backgroundColor: labChart.map((_, i) => 
+          isDark ? 
+          `rgba(${100 + (i * 30)}, ${50 + (i * 20)}, ${150 + (i * 10)}, 0.7)` :
+          `rgba(${50 + (i * 40)}, ${100 + (i * 10)}, ${200 - (i * 20)}, 0.7)`
+        ),
         borderColor: isDark ? '#1f2937' : '#fff',
         borderWidth: 2,
-        hoverOffset: 10,
       },
     ],
   };
 
-  // Patient Age Groups Data
-  const ageGroupData = {
-    labels: stats.patientAgeGroups.map(group => group.range),
-    datasets: [
-      {
-        label: 'Patients by Age',
-        data: stats.patientAgeGroups.map(group => group.count),
-        backgroundColor: [
-          isDark ? 'rgba(74, 222, 128, 0.7)' : 'rgba(16, 185, 129, 0.7)',
-          isDark ? 'rgba(96, 165, 250, 0.7)' : 'rgba(59, 130, 246, 0.7)',
-          isDark ? 'rgba(248, 113, 113, 0.7)' : 'rgba(239, 68, 68, 0.7)',
-          isDark ? 'rgba(245, 158, 11, 0.7)' : 'rgba(234, 88, 12, 0.7)',
-          isDark ? 'rgba(168, 85, 247, 0.7)' : 'rgba(124, 58, 237, 0.7)',
-        ],
-        borderColor: isDark ? '#374151' : '#e5e7eb',
-        borderWidth: 1,
-      },
-    ],
-  };
+  // Material Line Chart Data
+ const materialRadarData = {
+  labels: materialChart.map((_, index) => `Material ${index + 1}`),
+  datasets: [
+    {
+      label: 'Material Prices ($)',
+      data: materialChart,
+      backgroundColor: isDark ? 'rgba(74, 222, 128, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+      borderColor: isDark ? '#4ade80' : '#10b981',
+      pointBackgroundColor: isDark ? '#4ade80' : '#10b981',
+      pointBorderColor: isDark ? '#1f2937' : '#fff',
+      pointHoverBackgroundColor: isDark ? '#86efac' : '#34d399',
+      pointHoverBorderColor: isDark ? '#1f2937' : '#fff',
+      borderWidth: 2,  // Slightly thinner for radar charts
+      pointRadius: materialChart.length > 10 ? 3 : 5,
+      pointHoverRadius: 8,
+      fill: true,  // Enable fill for radar charts
+      tension: 0.1,  // Lower tension for radar charts
+    },
+  ],
+};
 
   // Common chart options
   const commonOptions = {
@@ -189,7 +152,7 @@ const Report = () => {
     },
   };
 
-  const lineOptions = {
+  const histogramOptions = {
     ...commonOptions,
     scales: {
       y: {
@@ -203,7 +166,7 @@ const Report = () => {
       },
       x: {
         grid: {
-          display: false,
+          color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
         },
         ticks: {
           color: isDark ? '#9ca3af' : '#6b7280',
@@ -223,7 +186,7 @@ const Report = () => {
         ticks: {
           color: isDark ? '#9ca3af' : '#6b7280',
           showLabelBackdrop: false,
-          callback: (value) => value, // Explicitly return tick value to avoid callback error
+          callback: (value) => value,
         },
       },
     },
@@ -235,146 +198,43 @@ const Report = () => {
       },
     },
   };
-
-  const pieOptions = {
-    ...commonOptions,
-    plugins: {
-      ...commonOptions.plugins,
-      legend: {
-        ...commonOptions.plugins.legend,
-        position: 'right',
-      },
-    },
-  };
-
-  const monthlyOptions = {
-    ...commonOptions,
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        },
-        ticks: {
-          color: isDark ? '#9ca3af' : '#6b7280',
-        },
-      },
-      x: {
-        grid: {
-          color: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-        },
-        ticks: {
-          color: isDark ? '#9ca3af' : '#6b7280',
-        },
-      },
-    },
-  };
-
   return (
     <div className={`p-6 min-h-screen ${isDark ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
       <h1 className="text-3xl font-bold mb-6">Dental Clinic Report</h1>
 
-      {/* Date Filter */}
-      <div className="flex flex-wrap items-center gap-4 mb-8">
-        <div className="flex flex-col">
-          <label className="mb-1 text-sm font-medium">Start Date</label>
-          <input
-            type="date"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            className={`border rounded p-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-          />
-        </div>
-
-        <div className="flex flex-col">
-          <label className="mb-1 text-sm font-medium">End Date</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            className={`border rounded p-2 ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-          />
-        </div>
-
-        <button
-          onClick={handleGenerateReport}
-          className="mt-5 md:mt-0 bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700 transition"
-        >
-          Generate Report
-        </button>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        {[
-          { label: 'Total Appointments', value: stats.totalAppointments, icon: '📅', trend: '↑ 12%' },
-          { label: 'Completed', value: stats.completed, icon: '✅', trend: '↑ 8%' },
-          { label: 'Pending', value: stats.pending, icon: '⏳', trend: '↓ 5%' },
-          { label: 'Total Revenue', value: `$${stats.revenue.toLocaleString()}`, icon: '💰', trend: '↑ 15%' },
-        ].map((item, index) => (
-          <div
-            key={index}
-            className={`${isDark ? 'bg-gray-800' : 'bg-white'} rounded-lg shadow-md p-6 transition-all hover:shadow-lg`}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-400">{item.label}</p>
-                <p className="text-2xl font-semibold mt-1">{item.value}</p>
-              </div>
-              <div className="text-3xl">{item.icon}</div>
-            </div>
-            <p className={`text-sm mt-2 ${item.trend.includes('↑') ? 'text-green-500' : 'text-red-500'}`}>
-              {item.trend} from last period
-            </p>
-          </div>
-        ))}
-      </div>
-
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Appointments Status Line Chart */}
+        {/* Patient Histogram Chart */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md`}>
-          <h3 className="text-lg font-semibold mb-4">Appointments Status</h3>
+          <h3 className="text-lg font-semibold mb-4">Patient total payment </h3>
           <div className="h-80">
-            <Line data={lineData} options={lineOptions} />
+            <Bar data={patientHistogramData} options={histogramOptions} />
+          </div>
+        </div>
+        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md`}>
+          <h3 className="text-lg font-semibold mb-4">Patient total debt </h3>
+          <div className="h-80">
+            <Bar data={debtHistogramData} options={histogramOptions} />
           </div>
         </div>
 
-        {/* Appointments Distribution Polar Area Chart */}
+        {/* Lab Polar Area Chart */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md`}>
-          <h3 className="text-lg font-semibold mb-4">Appointments Distribution</h3>
+          <h3 className="text-lg font-semibold mb-4">Lab Test Prices Distribution</h3>
           <div className="h-80">
-            <PolarArea data={polarData} options={polarOptions} />
+            <PolarArea data={labPolarData} options={polarOptions} />
           </div>
         </div>
-      </div>
-
-      {/* Second Row of Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Monthly Appointments */}
         <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md`}>
-          <h3 className="text-lg font-semibold mb-4">Monthly Appointments</h3>
+          <h3 className="text-lg font-semibold mb-4">Material Test Prices Distribution</h3>
           <div className="h-80">
-            <Bar data={monthlyData} options={monthlyOptions} />
-          </div>
-        </div>
-
-        {/* Services Distribution */}
-        <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md`}>
-          <h3 className="text-lg font-semibold mb-4">Services Distribution</h3>
-          <div className="h-80">
-            <Pie data={servicesData} options={pieOptions} />
+            <PolarArea data={materialRadarData} options={polarOptions} />
           </div>
         </div>
       </div>
 
-      {/* Third Row - Single Chart */}
-      <div className={`${isDark ? 'bg-gray-800' : 'bg-white'} p-6 rounded-xl shadow-md mb-6`}>
-        <h3 className="text-lg font-semibold mb-4">Patient Age Groups</h3>
-        <div className="h-96">
-          <Bar data={ageGroupData} options={monthlyOptions} />
-        </div>
-      </div>
+      {/* Second Row - Material Line Chart */}
+    
     </div>
   );
 };

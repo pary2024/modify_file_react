@@ -18,6 +18,7 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiLoader,
+  FiFileText
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { ThemeContext } from "../colors/Thems";
@@ -45,6 +46,7 @@ import {
 } from "chart.js";
 import dayjs from "dayjs";
 import { fetchDoctors } from "../stores/doctorSlice";
+import { fetchCompanies } from "../stores/companySlice";
 
 // Register Chart.js components
 ChartJS.register(
@@ -58,171 +60,6 @@ ChartJS.register(
   Title
 );
 
-const Invoice = ({ payment, onClose }) => {
-  const printRef = useRef();
-  const [isPrinting, setIsPrinting] = useState(false);
-  const dispatch = useDispatch();
-   const { patients } = useSelector((state) => state.patient);
-   const { invoicePatients } = useSelector((state) => state.invoicePatient);
-   useEffect(()=>{
-    dispatch(fetchPatients());
-    dispatch(fetchInvoicePatients());
-   },[dispatch]);
-
-
-  
-
-  const handlePrint = () => {
-    const imageCompany = localStorage.getItem("companyImage");
-    const companyName = localStorage.getItem("company");
-    setIsPrinting(true);
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert("Print window blocked. Please allow popups for this site and try again.");
-      setIsPrinting(false);
-      return;
-    }
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <title>Invoice #$</title>
-        <meta charset="UTF-8">
-        <style>
-          @page { size: A4; margin: 20mm; }
-          body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #000; }
-          .invoice-container { max-width: 800px; margin: auto; padding: 20px; }
-
-          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-          .logo { width: 100px; }
-          .clinic-info { text-align: right; font-size: 14px; }
-          .clinic-name { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
-
-          .invoice-title { text-align: center; font-size: 22px; font-weight: bold; margin: 20px 0; }
-
-          .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 14px; margin-bottom: 20px; }
-          .patient-info p { margin: 3px 0; }
-
-          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-          th, td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 14px; }
-          th { background-color: #f2f2f2; }
-
-          .totals { float: right; width: 300px; margin-top: 20px; }
-          .totals td { padding: 6px; text-align: right; border: none; font-size: 14px; }
-
-          .signatures { display: flex; justify-content: space-between; margin-top: 80px; font-size: 14px; }
-          .sign-box { text-align: center; width: 40%; }
-          .sign-line { border-top: 1px solid #000; margin-top: 60px; width: 80%; margin-left: auto; margin-right: auto; }
-
-          .footer { text-align: center; margin-top: 50px; font-size: 13px; }
-          @media print { .no-print { display: none !important; } }
-        </style>
-      </head>
-      <body onload="window.print(); setTimeout(() => window.close(), 1000)">
-        <div class="invoice-container">
-          <div class="header">
-            <img src="${imageCompany}/images/logo.png" alt="Logo" class="logo" />
-            <div class="clinic-info">
-              <div class="clinic-name">META DENTAL CLINIC</div>
-              <div>Tel: $</div>
-            </div>
-          </div>
-
-          <div class="invoice-title">Invoice</div>
-
-          <div class="patient-info">
-            <div>
-              <p><strong>Patient Name:</strong> $</p>
-              <p><strong>Phone Number:</strong> $</p>
-            </div>
-            <div>
-              <p><strong>Date:</strong> $</p>
-              <p><strong>Doctor:</strong> $</p>
-              <p><strong>Invoice No.:</strong> $</p>
-              <p><strong>Tel:</strong> $</p>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Description</th>
-                <th>#Teeth</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Amount</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${invoicePatients.items?.map(item => `
-                <tr>
-                  <td>${item.description}</td>
-                  <td>${item.teeth}</td>
-                  <td>${item.quantity}</td>
-                  <td>${item.price}</td>
-                  <td>${item.amount}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <table class="totals">
-            <tr><td>Total</td><td>$$</td></tr>
-            <tr><td>Payments</td><td>$$</td></tr>
-            <tr><td><strong>Balance Due</strong></td><td><strong>$$</strong></td></tr>
-          </table>
-
-          <div class="signatures">
-            <div class="sign-box">
-              <p><strong>Doctor's Signature</strong></p>
-              <div class="sign-line"></div>
-            </div>
-            <div class="sign-box">
-              <p><strong>Cashier</strong></p>
-              <div class="sign-line"></div>
-            </div>
-          </div>
-
-          <div class="footer">
-            Address: $<br />
-            Telephone: $
-          </div>
-        </div>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
-    setIsPrinting(false);
-  };
-
-  return (
-    <div className="p-4 bg-gray-100 min-h-screen">
-      {/* Preview container */}
-      <div ref={printRef} className="bg-white p-6 rounded shadow max-w-3xl mx-auto">
-        <p className="text-center text-xl font-semibold">Invoice Preview (Click Print to Generate)</p>
-      </div>
-
-      {/* Buttons */}
-      <div className="mt-8 flex justify-center gap-4 no-print">
-        <button
-          onClick={handlePrint}
-          disabled={isPrinting}
-          className={`flex items-center gap-2 ${isPrinting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white px-6 py-2 rounded-md shadow transition-colors`}
-        >
-          {isPrinting ? <><FiLoader className="animate-spin" /> Printing...</> : <><FiPrinter /> Print Invoice</>}
-        </button>
-        <button
-          onClick={onClose}
-          className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md shadow transition-colors"
-        >
-          <FiArrowLeft />
-          Back
-        </button>
-      </div>
-    </div>
-  );
-};
 
 
 const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
@@ -551,6 +388,8 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
     </div>
   );
 };
+
+
 
 const Payment = () => {
   const { isDark } = useContext(ThemeContext);
@@ -1506,9 +1345,279 @@ const Payment = () => {
             paymentToEdit={paymentToEdit}
           />
         </>
+        
       )}
+      
+    </div>
+    
+  );
+};
+const Invoice = ({ onClose, invoice  }) => {
+  const { invoicePatients } = useSelector((state) => state.invoicePatient);
+  
+  
+  
+  
+  const [selectedInvoice, setSelectedInvoice] = useState(null);
+
+  const printRef = useRef();
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const imageCompany = localStorage.getItem("companyImage");
+  const companyName = localStorage.getItem("company");
+
+  const handlePrint = (invoice) => {
+     setSelectedInvoice(invoice);
+    setIsPrinting(true);
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Print window blocked. Please allow popups for this site and try again.");
+      setIsPrinting(false);
+      return;
+    }
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <title>Dental Invoice</title>
+        <meta charset="UTF-8" />
+        <style>
+          @page { size: A4; margin: 15mm 20mm; }
+          body { font-family: Arial, sans-serif; margin: 0; padding: 0; color: #333; line-height: 1.5; }
+          .invoice-container { max-width: 800px; margin: 0 auto; padding: 25px; position: relative; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 2px solid #e0e6ed; }
+          .logo { width: 90px; height: 90px; object-fit: contain; border-radius: 8px; }
+          .clinic-info { text-align: right; }
+          .clinic-name { font-weight: bold; font-size: 22px; margin-bottom: 5px; color: #2c5282; }
+          .clinic-details { font-size: 13px; color: #4a5568; }
+          .invoice-title { text-align: center; font-size: 24px; font-weight: bold; margin: 25px 0; color: #2c5282; }
+          .patient-info { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid #e2e8f0; }
+          .patient-info p { margin: 5px 0; font-size: 14px; }
+          .patient-info strong { display: inline-block; width: 120px; color: #4a5568; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 30px; font-size: 14px; }
+          th { background-color: #2c5282; color: white; padding: 12px 10px; text-align: left; font-weight: 600; }
+          td { padding: 10px; border: 1px solid #e2e8f0; }
+          tr:nth-child(even) { background-color: #f8fafc; }
+          .totals { float: right; width: 300px; margin-top: 20px; }
+          .totals table { width: 100%; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 8px; }
+          .totals td { padding: 8px 12px; text-align: right; }
+          .totals tr:last-child td { font-weight: bold; font-size: 15px; color: #2c5282; }
+          .signatures { display: flex; justify-content: space-between; margin-top: 60px; padding-top: 40px; border-top: 1px solid #e2e8f0; }
+          .sign-box { text-align: center; width: 45%; }
+          .sign-line { border-top: 1px solid #cbd5e0; margin: 15px auto; width: 80%; }
+          .footer { text-align: center; margin-top: 40px; font-size: 12px; color: #718096; padding-top: 15px; border-top: 1px solid #e2e8f0; }
+          .watermark { position: absolute; opacity: 0.05; font-size: 120px; color: #2c5282; transform: rotate(-30deg); z-index: -1; top: 40%; left: 20%; font-weight: bold; }
+          @media print { .no-print { display: none !important; } body { -webkit-print-color-adjust: exact; } }
+        </style>
+      </head>
+      <body onload="window.print(); setTimeout(() => window.close(), 1000)">
+        <div class="invoice-container">
+          <div class="watermark">${companyName}</div>
+          <div class="header">
+            <img src="${imageCompany}" alt="Clinic Logo" class="logo" />
+            <div class="clinic-info">
+              <div class="clinic-name">${companyName}</div>
+              <div class="clinic-details">
+                <p>123 Dental Street, Smile City</p>
+                <p>Phone: (123) 456-7890 | Tax ID: 123-456-789</p>
+                <p>Email: contact@${companyName?.toLowerCase()?.replace(/\s+/g, '')}.com</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="invoice-title">Dental Treatment Invoice</div>
+
+          <div class="patient-info">
+            <div>
+              <p><strong>Patient Name:</strong> ${invoice?.patient?.name || 'N/A'}</p>
+              <p><strong>Phone:</strong> ${invoice?.patient?.phone || 'N/A'}</p>
+            </div>
+            <div>
+              <p><strong>Date:</strong> ${invoice?.created_at ? new Date(invoice.created_at).toLocaleDateString() : 'N/A'}</p>
+              <p><strong>Dentist:</strong> ${invoice?.doctor?.name || 'N/A'}</p>
+              <p><strong>Invoice No.:</strong> INV-${invoice?.id || '0000'}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+              
+                <th>Dentist</th>
+                <th>Price</th>
+                <th>Deposit</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+              
+                <td>${invoice?.doctor?.name || 'N/A'}</td>
+                <td>$${invoice?.price || '0.00'}</td>
+                <td>$${invoice?.deposit || '0.00'}</td>
+                <td>$${invoice?.total || '0.00'}</td>
+                <td>${invoice?.status || 'Pending'}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="totals">
+            <table>
+              <tr><td>Subtotal:</td><td>$${invoice?.price || '0.00'}</td></tr>
+              <tr><td>Tax (0%):</td><td>$0.00</td></tr>
+              <tr><td>Total Amount:</td><td>$${invoice?.total || '0.00'}</td></tr>
+              <tr><td>Amount Paid:</td><td>$${invoice?.deposit || '0.00'}</td></tr>
+              <tr><td>Balance Due:</td><td>$${((invoice?.total || 0) - (invoice?.deposit || 0))}</td></tr>
+            </table>
+          </div>
+
+          <div class="signatures">
+            <div class="sign-box">
+              <p><strong>Patient's Signature</strong></p>
+              <div class="sign-line"></div>
+              <p>${invoice?.patient?.name || 'Name'}</p>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing ${companyName}. Please bring this invoice for your next visit.</p>
+            <p>Office Hours: Mon-Fri 9:00 AM - 6:00 PM | Sat 9:00 AM - 2:00 PM</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setIsPrinting(false);
+  };
+
+   return (
+    <div className="p-6 bg-gray-50 min-h-screen">
+      <div className=" mx-auto bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
+
+        {selectedInvoice ? (
+          <>
+            <div className="bg-blue-700 p-4 text-white">
+              <h1 className="text-xl font-bold">Invoice Preview</h1>
+              <p className="text-blue-100 text-sm">
+                Patient: {selectedInvoice.patient?.name || "N/A"}
+              </p>
+            </div>
+
+            <div ref={printRef} className="p-6">
+              <div className="text-center mb-6">
+                <FiFileText className="mx-auto text-4xl text-gray-400 mb-3" />
+                <h2 className="text-lg font-medium text-gray-700">
+                  Dental Treatment Invoice
+                </h2>
+                <p className="text-gray-500 mt-2">
+                  For: {selectedInvoice.patient?.name || "Patient Name"}
+                </p>
+                <p className="text-gray-500">
+                  Date:{" "}
+                  {selectedInvoice.created_at
+                    ? new Date(selectedInvoice.created_at).toLocaleDateString()
+                    : "N/A"}
+                </p>
+              </div>
+
+              <div className="border border-dashed border-gray-300 rounded-lg p-4 mb-6">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="font-medium text-gray-700">Dentist:</p>
+                    <p>{selectedInvoice.doctor?.name || "N/A"}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Total Amount:</p>
+                    <p>${selectedInvoice.total || "0.00"}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Treatment:</p>
+                    <p>{selectedInvoice.treatment || "General Checkup"}</p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-700">Status:</p>
+                    <p>{selectedInvoice.status || "Pending"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-center text-gray-500 text-sm">
+                This is a preview. The actual printed invoice will contain full
+                details.
+              </p>
+            </div>
+
+            <div className="mt-8 flex justify-center gap-4 no-print p-6 border-t border-gray-200">
+              <button
+                onClick={() => handlePrint(selectedInvoice)}
+                className="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white rounded-md shadow"
+              >
+                {isPrinting ? "Printing..." : "Print Invoice"}
+              </button>
+
+              <button
+                onClick={() => setSelectedInvoice(null)}
+                className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-md shadow"
+              >
+                <FiArrowLeft size={18} />
+                Back to Invoices
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="bg-blue-700 p-4 text-white">
+              <h1 className="text-xl font-bold">Invoice List</h1>
+              <p className="text-blue-100 text-sm">
+                Click on an invoice to preview and print.
+              </p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {invoicePatients.map((invoice) => (
+                <div
+                  key={invoice.id}
+                  className="border p-4 rounded-md shadow-sm bg-white"
+                >
+                  <h4 className="text-md font-semibold text-gray-700">
+                    {invoice.patient?.name}
+                  </h4>
+                  <p className="text-sm text-gray-500">
+                    Total: ${invoice.total} | Date:{" "}
+                    {new Date(invoice.created_at).toLocaleDateString()}
+                  </p>
+                  <button
+                    onClick={() => setSelectedInvoice(invoice)}
+                    className="mt-2 inline-block text-sm text-blue-600 hover:underline"
+                  >
+                    View & Print
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={onClose}
+                className="flex items-center gap-2 bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-md shadow"
+              >
+                <FiArrowLeft size={18} />
+                <span>Back to Patient List</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        <div className="mt-4 text-center text-sm text-gray-500 no-print pb-6">
+          <p>Ensure your printer has enough paper before printing.</p>
+        </div>
+      </div>
     </div>
   );
 };
+
 
 export default Payment;

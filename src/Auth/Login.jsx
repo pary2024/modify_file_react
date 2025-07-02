@@ -34,6 +34,7 @@ const Login = () => {
         const base64String = reader.result;
         setCompanyImage(base64String);
         localStorage.setItem('companyImage', base64String);
+        
       };
       reader.readAsDataURL(file);
     }
@@ -41,11 +42,15 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError(''); // Clear previous errors
-
+    
     try {
       const result = await dispatch(loginUser({ email, password,company}));
       if (loginUser.fulfilled.match(result)) {
-       
+         const companies = result.payload;
+        if (companies?.phone) {
+          localStorage.setItem('phone', companies.phone);
+        }
+        
         navigate('/admin');
       } else {
         setError(authError || 'Login failed. Please check your credentials.');
