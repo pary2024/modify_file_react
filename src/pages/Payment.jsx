@@ -18,10 +18,10 @@ import {
   FiCheckCircle,
   FiXCircle,
   FiLoader,
-  FiFileText
+  FiFileText,
 } from "react-icons/fi";
 import { format } from "date-fns";
-import { ThemeContext } from "../Colors/Thems";
+import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPatients } from "../Stores/patientSlice";
 import { fetchTreats } from "../Stores/treatSlice";
@@ -31,7 +31,7 @@ import {
   deleteInvoicePatient,
 } from "../Stores/invoicePatientSlice";
 import { fetchPays } from "../Stores/paySlice";
-import { ToastContainer,  toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
 import { Doughnut, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -47,7 +47,6 @@ import {
 import dayjs from "dayjs";
 import { fetchDoctors } from "../Stores/doctorSlice";
 
-
 // Register Chart.js components
 ChartJS.register(
   ArcElement,
@@ -60,8 +59,6 @@ ChartJS.register(
   Title
 );
 
-
-
 const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
   const dispatch = useDispatch();
   const { patients } = useSelector((state) => state.patient);
@@ -70,14 +67,13 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
 
   const [patient_id, setPatient] = useState("");
   const [phone, setPhone] = useState("");
- const  [doctor_id, setDoctor] = useState("");
+  const [doctor_id, setDoctor] = useState("");
   const [price, setPrice] = useState(0);
   const [pay_id, setMethod] = useState("");
   const [deposit, setDeposit] = useState(0);
   const [total, setTotal] = useState(0);
   const [debt, setDebt] = useState(0);
   const [status, setStatus] = useState("");
-  
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -91,31 +87,28 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
       total: total,
       debt: debt,
       status: status,
-      
-     
     };
     try {
       await dispatch(createInvoicePatient(data));
       dispatch(fetchInvoicePatients());
-      toast.success('Payment created successfully!', { position: "top-right" });
-      setPatient('');
-      setPhone('');
-      setDoctor('');
+      toast.success("Payment created successfully!", { position: "top-right" });
+      setPatient("");
+      setPhone("");
+      setDoctor("");
       setPrice(0);
-      setMethod('');
+      setMethod("");
       setDeposit(0);
       setTotal(0);
       setDebt(0);
-      setStatus('');
+      setStatus("");
 
       onClose();
     } catch (e) {
-      toast.error(`Error creating payment: ${e.message}`, { position: "top-right" });
-      
+      toast.error(`Error creating payment: ${e.message}`, {
+        position: "top-right",
+      });
     }
   };
-
-  
 
   useEffect(() => {
     const calculatedDebt = parseFloat(total) - parseFloat(deposit);
@@ -129,7 +122,6 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       data-aos="zoom-in"
     >
-       
       <div
         className={`rounded-lg shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto ${
           isDark ? "bg-gray-800 text-gray-100" : "bg-white text-gray-800"
@@ -183,7 +175,7 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
             </div>
           </div>
 
-            <div>
+          <div>
             <label
               htmlFor="patient-select"
               className="block text-sm font-medium mb-1"
@@ -207,7 +199,7 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
                 required
               >
                 <option value="" disabled>
-                   Select a doctor
+                  Select a doctor
                 </option>
                 {doctors.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -217,7 +209,6 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
               </select>
             </div>
           </div>
-
 
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -235,8 +226,6 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
               }`}
             />
           </div>
-
-        
 
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -389,8 +378,6 @@ const PaymentModal = ({ isOpen, onClose, isDark, paymentToEdit }) => {
   );
 };
 
-
-
 const Payment = () => {
   const { isDark } = useContext(ThemeContext);
   const dispatch = useDispatch();
@@ -402,7 +389,7 @@ const Payment = () => {
     dispatch(fetchTreats());
     dispatch(fetchInvoicePatients());
     dispatch(fetchPays());
-    dispatch(fetchDoctors())
+    dispatch(fetchDoctors());
   }, [dispatch]);
 
   console.log("invoice patient status", invoicePatients.status);
@@ -746,7 +733,11 @@ const Payment = () => {
         isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
       }`}
     >
-      <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        theme={isDark ? "dark" : "light"}
+      />
       {selectedPayment ? (
         <Invoice
           payment={selectedPayment}
@@ -827,7 +818,7 @@ const Payment = () => {
               isDark ? "bg-gray-800" : "bg-white"
             }`}
           >
-           <div className="overflow-x-auto rounded-lg border shadow-sm">
+            <div className="overflow-x-auto rounded-lg border shadow-sm">
               <table className="w-full table-auto">
                 <thead>
                   <tr
@@ -838,22 +829,41 @@ const Payment = () => {
                     }`}
                   >
                     <th className="p-4 text-left text-sm font-medium">ID</th>
-                    <th className="p-4 text-left text-sm font-medium">Patient</th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      Patient
+                    </th>
                     <th className="p-4 text-left text-sm font-medium">Phone</th>
-                    <th className="p-4 text-left text-sm font-medium">Doctor</th>
-                    <th className="p-4 text-left text-sm font-medium">Due Date</th>
-                    <th className="p-4 text-right text-sm font-medium">Total</th>
-                    <th className="p-4 text-right text-sm font-medium">Price</th>
-                    <th className="p-4 text-right text-sm font-medium">Deposit</th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      Doctor
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      Due Date
+                    </th>
+                    <th className="p-4 text-right text-sm font-medium">
+                      Total
+                    </th>
+                    <th className="p-4 text-right text-sm font-medium">
+                      Price
+                    </th>
+                    <th className="p-4 text-right text-sm font-medium">
+                      Deposit
+                    </th>
                     <th className="p-4 text-right text-sm font-medium">Debt</th>
-                    <th className="p-4 text-left text-sm font-medium">Method</th>
-                    <th className="p-4 text-left text-sm font-medium">Status</th>
-                    <th className="p-4 text-right text-sm font-medium">Actions</th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      Method
+                    </th>
+                    <th className="p-4 text-left text-sm font-medium">
+                      Status
+                    </th>
+                    <th className="p-4 text-right text-sm font-medium">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
 
                 <tbody>
-                  {Array.isArray(currentPayments) && currentPayments.length > 0 ? (
+                  {Array.isArray(currentPayments) &&
+                  currentPayments.length > 0 ? (
                     currentPayments.map((payment, index) => (
                       <tr
                         key={payment.id || index}
@@ -861,42 +871,72 @@ const Payment = () => {
                           isDark
                             ? "border-gray-700 hover:bg-gray-800/50"
                             : "border-gray-100 hover:bg-orange-50"
-                        } ${index === currentPayments.length - 1 ? "last:border-b-0" : ""}`}
+                        } ${
+                          index === currentPayments.length - 1
+                            ? "last:border-b-0"
+                            : ""
+                        }`}
                       >
                         <td className="p-4 text-sm font-medium">
-                          <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                          <span
+                            className={
+                              isDark ? "text-gray-300" : "text-gray-700"
+                            }
+                          >
                             {payment.id || "N/A"}
                           </span>
                         </td>
 
                         <td className="p-4 text-sm">
-                          <span className={isDark ? "text-gray-100" : "text-gray-800"}>
+                          <span
+                            className={
+                              isDark ? "text-gray-100" : "text-gray-800"
+                            }
+                          >
                             {payment.patient?.name || "N/A"}
                           </span>
                         </td>
 
                         <td className="p-4 text-sm">
-                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                          <span
+                            className={
+                              isDark ? "text-gray-300" : "text-gray-600"
+                            }
+                          >
                             {payment.patient?.phone || "N/A"}
                           </span>
                         </td>
 
                         <td className="p-4 text-sm">
-                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                          <span
+                            className={
+                              isDark ? "text-gray-300" : "text-gray-600"
+                            }
+                          >
                             {payment.doctor?.name || "N/A"}
                           </span>
                         </td>
 
                         <td className="p-4 text-sm">
-                          <span className={isDark ? "text-orange-300" : "text-orange-600"}>
+                          <span
+                            className={
+                              isDark ? "text-orange-300" : "text-orange-600"
+                            }
+                          >
                             {payment.created_at
-                              ? dayjs(payment.created_at).format("YYYY-MM-DD HH:mm:ss")
+                              ? dayjs(payment.created_at).format(
+                                  "YYYY-MM-DD HH:mm:ss"
+                                )
                               : ""}
                           </span>
                         </td>
 
                         <td className="p-4 text-right text-sm">
-                          <span className={isDark ? "text-orange-300" : "text-orange-600"}>
+                          <span
+                            className={
+                              isDark ? "text-orange-300" : "text-orange-600"
+                            }
+                          >
                             {payment.total
                               ? payment.total.toLocaleString("en-US", {
                                   style: "currency",
@@ -907,19 +947,31 @@ const Payment = () => {
                         </td>
 
                         <td className="p-4 text-right text-sm">
-                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                          <span
+                            className={
+                              isDark ? "text-gray-300" : "text-gray-600"
+                            }
+                          >
                             {payment.price || "N/A"}
                           </span>
                         </td>
 
                         <td className="p-4 text-right text-sm">
-                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                          <span
+                            className={
+                              isDark ? "text-gray-300" : "text-gray-600"
+                            }
+                          >
                             {payment.deposit || "N/A"}
                           </span>
                         </td>
 
                         <td className="p-4 text-right text-sm">
-                          <span className={isDark ? "text-gray-300" : "text-gray-600"}>
+                          <span
+                            className={
+                              isDark ? "text-gray-300" : "text-gray-600"
+                            }
+                          >
                             {payment.debt || "N/A"}
                           </span>
                         </td>
@@ -1008,7 +1060,11 @@ const Payment = () => {
                               isDark ? "text-gray-600" : "text-gray-300"
                             }`}
                           />
-                          <p className={isDark ? "text-gray-400" : "text-gray-500"}>
+                          <p
+                            className={
+                              isDark ? "text-gray-400" : "text-gray-500"
+                            }
+                          >
                             No payments found. Create your first payment.
                           </p>
                           <button
@@ -1345,19 +1401,13 @@ const Payment = () => {
             paymentToEdit={paymentToEdit}
           />
         </>
-        
       )}
-      
     </div>
-    
   );
 };
-const Invoice = ({ onClose, invoice  }) => {
+const Invoice = ({ onClose, invoice }) => {
   const { invoicePatients } = useSelector((state) => state.invoicePatient);
-  
-  
-  
-  
+
   const [selectedInvoice, setSelectedInvoice] = useState(null);
 
   const printRef = useRef();
@@ -1367,11 +1417,13 @@ const Invoice = ({ onClose, invoice  }) => {
   const companyName = localStorage.getItem("company");
 
   const handlePrint = (invoice) => {
-     setSelectedInvoice(invoice);
+    setSelectedInvoice(invoice);
     setIsPrinting(true);
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
-      alert("Print window blocked. Please allow popups for this site and try again.");
+      alert(
+        "Print window blocked. Please allow popups for this site and try again."
+      );
       setIsPrinting(false);
       return;
     }
@@ -1421,7 +1473,9 @@ const Invoice = ({ onClose, invoice  }) => {
               <div class="clinic-details">
                 <p>123 Dental Street, Smile City</p>
                 <p>Phone: (123) 456-7890 | Tax ID: 123-456-789</p>
-                <p>Email: contact@${companyName?.toLowerCase()?.replace(/\s+/g, '')}.com</p>
+                <p>Email: contact@${companyName
+                  ?.toLowerCase()
+                  ?.replace(/\s+/g, "")}.com</p>
               </div>
             </div>
           </div>
@@ -1430,13 +1484,19 @@ const Invoice = ({ onClose, invoice  }) => {
 
           <div class="patient-info">
             <div>
-              <p><strong>Patient Name:</strong> ${invoice?.patient?.name || 'N/A'}</p>
-              <p><strong>Phone:</strong> ${invoice?.patient?.phone || 'N/A'}</p>
+              <p><strong>Patient Name:</strong> ${
+                invoice?.patient?.name || "N/A"
+              }</p>
+              <p><strong>Phone:</strong> ${invoice?.patient?.phone || "N/A"}</p>
             </div>
             <div>
-              <p><strong>Date:</strong> ${invoice?.created_at ? new Date(invoice.created_at).toLocaleDateString() : 'N/A'}</p>
-              <p><strong>Dentist:</strong> ${invoice?.doctor?.name || 'N/A'}</p>
-              <p><strong>Invoice No.:</strong> INV-${invoice?.id || '0000'}</p>
+              <p><strong>Date:</strong> ${
+                invoice?.created_at
+                  ? new Date(invoice.created_at).toLocaleDateString()
+                  : "N/A"
+              }</p>
+              <p><strong>Dentist:</strong> ${invoice?.doctor?.name || "N/A"}</p>
+              <p><strong>Invoice No.:</strong> INV-${invoice?.id || "0000"}</p>
             </div>
           </div>
 
@@ -1454,22 +1514,28 @@ const Invoice = ({ onClose, invoice  }) => {
             <tbody>
               <tr>
               
-                <td>${invoice?.doctor?.name || 'N/A'}</td>
-                <td>$${invoice?.price || '0.00'}</td>
-                <td>$${invoice?.deposit || '0.00'}</td>
-                <td>$${invoice?.total || '0.00'}</td>
-                <td>${invoice?.status || 'Pending'}</td>
+                <td>${invoice?.doctor?.name || "N/A"}</td>
+                <td>$${invoice?.price || "0.00"}</td>
+                <td>$${invoice?.deposit || "0.00"}</td>
+                <td>$${invoice?.total || "0.00"}</td>
+                <td>${invoice?.status || "Pending"}</td>
               </tr>
             </tbody>
           </table>
 
           <div class="totals">
             <table>
-              <tr><td>Subtotal:</td><td>$${invoice?.price || '0.00'}</td></tr>
+              <tr><td>Subtotal:</td><td>$${invoice?.price || "0.00"}</td></tr>
               <tr><td>Tax (0%):</td><td>$0.00</td></tr>
-              <tr><td>Total Amount:</td><td>$${invoice?.total || '0.00'}</td></tr>
-              <tr><td>Amount Paid:</td><td>$${invoice?.deposit || '0.00'}</td></tr>
-              <tr><td>Balance Due:</td><td>$${((invoice?.total || 0) - (invoice?.deposit || 0))}</td></tr>
+              <tr><td>Total Amount:</td><td>$${
+                invoice?.total || "0.00"
+              }</td></tr>
+              <tr><td>Amount Paid:</td><td>$${
+                invoice?.deposit || "0.00"
+              }</td></tr>
+              <tr><td>Balance Due:</td><td>$${
+                (invoice?.total || 0) - (invoice?.deposit || 0)
+              }</td></tr>
             </table>
           </div>
 
@@ -1477,7 +1543,7 @@ const Invoice = ({ onClose, invoice  }) => {
             <div class="sign-box">
               <p><strong>Patient's Signature</strong></p>
               <div class="sign-line"></div>
-              <p>${invoice?.patient?.name || 'Name'}</p>
+              <p>${invoice?.patient?.name || "Name"}</p>
             </div>
           </div>
 
@@ -1493,10 +1559,9 @@ const Invoice = ({ onClose, invoice  }) => {
     setIsPrinting(false);
   };
 
-   return (
+  return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className=" mx-auto bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
-
         {selectedInvoice ? (
           <>
             <div className="bg-blue-700 p-4 text-white">
@@ -1618,6 +1683,5 @@ const Invoice = ({ onClose, invoice  }) => {
     </div>
   );
 };
-
 
 export default Payment;

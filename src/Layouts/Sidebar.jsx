@@ -18,12 +18,19 @@ import {
   MdSms,
   MdSettings,
   MdLogout,
-   MdSchool, MdMap, MdHealing,MdBusiness,MdScience, MdBuild, MdBiotech, MdWork
+  MdSchool,
+  MdMap,
+  MdHealing,
+  MdBusiness,
+  MdScience,
+  MdBuild,
+  MdBiotech,
+  MdWork,
 } from "react-icons/md";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../stores/authSlice";
-import { ThemeContext } from "../colors/Thems"; // Adjust path as needed
+import { ThemeContext } from "../Colors/Themes"; // Adjust path as needed
 import {
   IoChevronDown,
   IoChevronUp,
@@ -38,25 +45,20 @@ const Sidebar = () => {
   const [showAppointmentDropdown, setShowAppointmentDropdown] = useState(false);
   const location = useLocation();
   const dispatch = useDispatch();
-  const userRole = localStorage.getItem("roles") || "user"; 
-  const {companies} = useSelector((state)=>state.company);
-  useEffect(()=>{
-    dispatch(fetchCompanies())
-  },[dispatch]);
-   
+  const userRole = localStorage.getItem("roles") || "user";
+  const { companies } = useSelector((state) => state.company);
+  useEffect(() => {
+    dispatch(fetchCompanies());
+  }, [dispatch]);
 
   const imageCompany = localStorage.getItem("companyImage");
   const companyName = localStorage.getItem("company");
-
-
-  
-  
 
   const menuItems = [
     { label: "Dashboard", icon: <MdDashboard />, href: "/admin" },
     // { label: "Departments", icon: <MdApartment />, href: "/admin/department" },
     { label: "Patient", icon: <MdPerson />, href: "/admin/list" },
-    { label: "Duty", icon: <MdWork />, href: "/admin/dutyDoctor" }, 
+    { label: "Duty", icon: <MdWork />, href: "/admin/dutyDoctor" },
     {
       label: "Doctor",
       icon: <FaUserMd />,
@@ -67,18 +69,18 @@ const Sidebar = () => {
       icon: <MdHealing />,
       href: "/admin/treat",
     },
-    { label: "Material", icon: <MdBuild />, href: "/admin/material" },     // Material -> tools/building
-    { label: "Lab", icon: <MdBiotech />, href: "/admin/lab" },             // Lab -> biotech/test
+    { label: "Material", icon: <MdBuild />, href: "/admin/material" }, // Material -> tools/building
+    { label: "Lab", icon: <MdBiotech />, href: "/admin/lab" }, // Lab -> biotech/test
     { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
-    
+
     // Admin-only routes
     {
       label: "User",
       icon: <RiMedicineBottleLine />,
       href: "/admin/user",
     },
-    { label: "Method", icon: <MdScience />, href: "/admin/method" },       // Method -> science/research
-    
+    { label: "Method", icon: <MdScience />, href: "/admin/method" }, // Method -> science/research
+
     {
       label: "Province",
       icon: <MdMap />,
@@ -122,8 +124,7 @@ const Sidebar = () => {
             />
           </div>
           <h1 className="text-2xl font-bold text-center">
-            <span className="text-blue-300">{companyName}</span>{' '}
-           
+            <span className="text-blue-300">{companyName}</span>{" "}
           </h1>
           <p className="text-xs text-blue-200 mt-1">Healthcare Management</p>
         </div>
@@ -176,7 +177,6 @@ const Sidebar = () => {
                     <span className="text-sm">Patient Appointments</span>
                   </Link>
                 </li>
-               
               </ul>
             )}
           </li>
@@ -211,7 +211,6 @@ const Sidebar = () => {
                     <span className="text-sm">Reception</span>
                   </Link>
                 </li>
-               
               </ul>
             )}
           </li>
@@ -219,7 +218,6 @@ const Sidebar = () => {
 
         {/* Bottom Settings/Profile */}
         <div className="mt-auto pt-4 border-t border-blue-700">
-         
           <button
             onClick={handleLogout}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-700 transition-all w-full"

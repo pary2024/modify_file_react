@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import { ThemeContext } from "../Colors/Thems";
+import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
 import { createAppointmentPatient, fetchAppointmentPatients } from "../Stores/appointmentPatientSlice";
 import { fetchDoctors } from "../Stores/doctorSlice";

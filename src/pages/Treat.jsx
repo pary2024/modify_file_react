@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import { ThemeContext } from "../Colors/Thems";
+import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
 import { createTreat, fetchTreats } from "../Stores/treatSlice";
 
@@ -15,7 +15,7 @@ const Treat = () => {
   // UX: Add loading state for fetching treatments
   const [isLoading, setIsLoading] = useState(false);
   const [name, setName] = useState("");
-  const [alertMessage, setAlertMessage] = useState(null); 
+  const [alertMessage, setAlertMessage] = useState(null);
 
   useEffect(() => {
     // UX: Set loading state during fetch
@@ -23,17 +23,17 @@ const Treat = () => {
     dispatch(fetchTreats()).finally(() => setIsLoading(false));
   }, [dispatch]);
   useEffect(() => {
-        if (alertMessage) {
-          Swal.fire({
-            icon: alertMessage.type,
-            title: alertMessage.text,
-            showConfirmButton: false,
-            timer: 1500,
-            position: "top-end",
-          });
-          setAlertMessage(null); // clear after showing
-        }
-      }, [alertMessage]);
+    if (alertMessage) {
+      Swal.fire({
+        icon: alertMessage.type,
+        title: alertMessage.text,
+        showConfirmButton: false,
+        timer: 1500,
+        position: "top-end",
+      });
+      setAlertMessage(null); // clear after showing
+    }
+  }, [alertMessage]);
 
   // Ensure treatments is an array before filtering
   const filteredTreatments = Array.isArray(treats)
@@ -51,13 +51,13 @@ const Treat = () => {
       await dispatch(createTreat(newTreat));
       dispatch(fetchTreats());
       setShowForm(false);
-     Swal.fire({
-              icon: "success",
-              title: "Treatment created successfully!",
-              showConfirmButton: false,
-              timer: 1500,
-              position: "top-end",
-            });
+      Swal.fire({
+        icon: "success",
+        title: "Treatment created successfully!",
+        showConfirmButton: false,
+        timer: 1500,
+        position: "top-end",
+      });
       setName("");
     } catch (e) {
       setError("Error creating treat");
@@ -74,7 +74,6 @@ const Treat = () => {
         Dental Treatment Management
       </h1>
 
-     
       {/* UX: Enhanced error message with dismiss button and ARIA alert */}
       {error && (
         <div

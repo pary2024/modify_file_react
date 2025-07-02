@@ -7,7 +7,7 @@ import {
   PrinterIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  XMarkIcon
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import {
   UserIcon,
@@ -21,12 +21,12 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { FaSearch } from "react-icons/fa";
-import { ThemeContext } from "../Colors/Thems";
+import { ThemeContext } from "../Colors/Themes";
 import * as XLSX from "xlsx";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
-import { ToastContainer,  toast } from 'react-toastify';
-import { Bar, Pie } from 'react-chartjs-2';
+import { ToastContainer, toast } from "react-toastify";
+import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -36,16 +36,15 @@ import {
   Tooltip,
   Legend,
   ArcElement,
-} from 'chart.js';
+} from "chart.js";
 import {
   fetchPatients,
   createPatient,
   updatePatient,
   deletePatient,
 } from "../Stores/patientSlice";
-import Swal from 'sweetalert2';
+import Swal from "sweetalert2";
 import { fetchProvinces } from "../Stores/provinceSlice";
-
 
 // Register Chart.js components
 ChartJS.register(
@@ -63,7 +62,7 @@ export default function PatientList() {
   const dispatch = useDispatch();
   const { patients, status, error } = useSelector((state) => state.patient);
   const { provinces } = useSelector((state) => state.province);
- 
+
   const [editingId, setEditingId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -78,7 +77,6 @@ export default function PatientList() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(7);
- 
 
   useEffect(() => {
     dispatch(fetchPatients());
@@ -100,7 +98,10 @@ export default function PatientList() {
   const totalPages = Math.ceil(filteredPatients.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentPatients = filteredPatients.slice(indexOfFirstItem, indexOfLastItem);
+  const currentPatients = filteredPatients.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   // Generate page numbers for display
   const getPageNumbers = () => {
@@ -154,7 +155,7 @@ export default function PatientList() {
       await dispatch(createPatient(newPatient)).unwrap();
       dispatch(fetchPatients());
       setShowCreateModal(false);
-      toast.success('Patient created successfully!', { position: "top-right" });
+      toast.success("Patient created successfully!", { position: "top-right" });
       setPatient("");
       setAge("");
       setProvince("");
@@ -163,7 +164,9 @@ export default function PatientList() {
       setStatus("active");
       setGender("male");
     } catch (e) {
-      toast.error(`Error creating patient: ${e.message}`, { position: "top-right" });
+      toast.error(`Error creating patient: ${e.message}`, {
+        position: "top-right",
+      });
     }
   };
 
@@ -204,7 +207,6 @@ export default function PatientList() {
       setGender("male");
     } catch (e) {
       console.error("Error updating patient:", e);
-      
     }
   };
 
@@ -212,31 +214,32 @@ export default function PatientList() {
     try {
       await dispatch(deletePatient(id));
       dispatch(fetchPatients());
-      toast.success('patient deleted successfully!', { position: "top-right" });
+      toast.success("patient deleted successfully!", { position: "top-right" });
       if (currentPatients.length === 1 && currentPage > 1) {
         setCurrentPage(currentPage - 1);
       }
     } catch (e) {
-      toast.error(`Error delete patient: ${e.message}`, { position: "top-right" });
-      
+      toast.error(`Error delete patient: ${e.message}`, {
+        position: "top-right",
+      });
     }
   };
 
- 
+  // Pass full patient list and current patient to this function
+  const handlePrintWaitingNumber = (patient, allPatients) => {
+    const sortedPatients = allPatients
+      .filter((p) => p.created_at) // only registered patients
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
- // Pass full patient list and current patient to this function
-const handlePrintWaitingNumber = (patient, allPatients) => {
-  const sortedPatients = allPatients
-    .filter(p => p.created_at) // only registered patients
-    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const index = sortedPatients.findIndex((p) => p.id === patient.id);
+    const waitingNumber = index !== -1 ? index + 1 : `#`;
 
-  const index = sortedPatients.findIndex(p => p.id === patient.id);
-  const waitingNumber = index !== -1 ? index + 1 : `#`;
+    const date = dayjs(
+      patient.created_at || patient.create_at || new Date()
+    ).format("YYYY-MM-DD HH:mm");
 
-  const date = dayjs(patient.created_at || patient.create_at || new Date()).format("YYYY-MM-DD HH:mm");
-
-  const printWindow = window.open("", "_blank");
-  printWindow.document.write(`
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
     <html>
       <head>
         <title>Waiting Number</title>
@@ -306,10 +309,8 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
       </body>
     </html>
   `);
-  printWindow.document.close();
-};
-
-
+    printWindow.document.close();
+  };
 
   const exportToExcel = () => {
     const dataForExport = filteredPatients.map((patient) => ({
@@ -320,9 +321,10 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
       Phone: patient.phone,
       Career: patient.career,
       Status: patient.status,
-      Registered: patient.create_at || patient.created_at
-        ? new Date(patient.create_at || patient.created_at).toLocaleString()
-        : "",
+      Registered:
+        patient.create_at || patient.created_at
+          ? new Date(patient.create_at || patient.created_at).toLocaleString()
+          : "",
       Province_id: patient.province?.name || patient.province,
     }));
     const worksheet = XLSX.utils.json_to_sheet(dataForExport);
@@ -356,10 +358,14 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
         {
           label: "Number of Patients",
           data: ageRanges.map((r) => r.count),
-          backgroundColor: isDark ? "rgba(246, 59, 59, 0.6)" : "rgba(250, 122, 10, 0.6)",
+          backgroundColor: isDark
+            ? "rgba(246, 59, 59, 0.6)"
+            : "rgba(250, 122, 10, 0.6)",
           borderColor: isDark ? "rgb(246, 59, 59)" : "rgb(235, 133, 37)",
           borderWidth: 4,
-          hoverBackgroundColor: isDark ? "rgba(249, 91, 0, 0.8)" : "rgba(247, 136, 0, 0.8)",
+          hoverBackgroundColor: isDark
+            ? "rgba(249, 91, 0, 0.8)"
+            : "rgba(247, 136, 0, 0.8)",
         },
       ],
     };
@@ -369,13 +375,18 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
   const getGenderDistribution = () => {
     const genderCounts = { male: 0, female: 0 };
     filteredPatients.forEach((patient) => {
-      if (patient.gender && genderCounts.hasOwnProperty(patient.gender.toLowerCase())) {
+      if (
+        patient.gender &&
+        genderCounts.hasOwnProperty(patient.gender.toLowerCase())
+      ) {
         genderCounts[patient.gender.toLowerCase()] += 1;
       }
     });
     const total = genderCounts.male + genderCounts.female;
-    const malePercentage = total > 0 ? ((genderCounts.male / total) * 100).toFixed(1) : 0;
-    const femalePercentage = total > 0 ? ((genderCounts.female / total) * 100).toFixed(1) : 0;
+    const malePercentage =
+      total > 0 ? ((genderCounts.male / total) * 100).toFixed(1) : 0;
+    const femalePercentage =
+      total > 0 ? ((genderCounts.female / total) * 100).toFixed(1) : 0;
 
     return {
       labels: [`Male (${malePercentage}%)`, `Female (${femalePercentage}%)`],
@@ -428,7 +439,9 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
         },
       },
       tooltip: {
-        backgroundColor: isDark ? "rgba(31, 41, 55, 0.9)" : "rgba(255, 255, 255, 0.9)",
+        backgroundColor: isDark
+          ? "rgba(31, 41, 55, 0.9)"
+          : "rgba(255, 255, 255, 0.9)",
         titleColor: isDark ? "#e5e7eb" : "#374151",
         bodyColor: isDark ? "#e5e7eb" : "#374151",
         borderColor: isDark ? "#4b5563" : "#d1d5db",
@@ -484,17 +497,20 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
         },
       },
       tooltip: {
-        backgroundColor: isDark ? "rgba(31, 41, 55, 0.9)" : "rgba(255, 255, 255, 0.9)",
+        backgroundColor: isDark
+          ? "rgba(31, 41, 55, 0.9)"
+          : "rgba(255, 255, 255, 0.9)",
         titleColor: isDark ? "#e5e7eb" : "#374151",
         bodyColor: isDark ? "#e5e7eb" : "#374151",
         borderColor: isDark ? "#4b5563" : "#d1d5db",
         borderWidth: 4,
         callbacks: {
-          label: function(context) {
-            const label = context.label || '';
+          label: function (context) {
+            const label = context.label || "";
             const value = context.parsed || 0;
             const total = context.dataset.data.reduce((a, b) => a + b, 0);
-            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+            const percentage =
+              total > 0 ? ((value / total) * 100).toFixed(1) : 0;
             return `${label}: ${value} (${percentage}%)`;
           },
         },
@@ -508,14 +524,20 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
         isDark ? "bg-gray-900 text-gray-100" : "bg-gray-50 text-gray-800"
       }`}
     >
-       <ToastContainer position="top-center" autoClose={3000} theme={isDark ? "dark" : "light"} />
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        theme={isDark ? "dark" : "light"}
+      />
       <div
         className={`mx-auto rounded-xl overflow-hidden ${
           isDark ? "bg-gray-800" : "bg-white"
         }`}
       >
         <div
-          className={`p-6 ${isDark ? "bg-gray-700" : "bg-white-600"} text-white`}
+          className={`p-6 ${
+            isDark ? "bg-gray-700" : "bg-white-600"
+          } text-white`}
         >
           <h1 className="text-3xl text-black font-bold flex items-center gap-3">
             <UserCircleIcon className="w-8 h-8" />
@@ -647,7 +669,7 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
                       Phone
                     </div>
                   </th>
-                 
+
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
@@ -773,7 +795,9 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
                         </span>
                       </td>
                       <td className="px-11 py-4 whitespace-nowrap text-sm">
-                        {p.created_at ? dayjs(p.created_at).format("YYYY-MM-DD HH:mm:ss") : ""}
+                        {p.created_at
+                          ? dayjs(p.created_at).format("YYYY-MM-DD HH:mm:ss")
+                          : ""}
                       </td>
                       <td className="px-12 py-4 whitespace-nowrap text-sm">
                         {p.career}
@@ -794,8 +818,10 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
                           >
                             <PencilIcon className="w-4 h-4" />
                           </button>
-                         <button
-                            onClick={() => handlePrintWaitingNumber(p, patients)}
+                          <button
+                            onClick={() =>
+                              handlePrintWaitingNumber(p, patients)
+                            }
                             className={`p-2 rounded-full ${
                               isDark
                                 ? "text-green-400 hover:bg-gray-700"
@@ -833,7 +859,7 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
               </tbody>
             </table>
           </div>
-         
+
           {/* Pagination */}
           {status === "succeeded" && filteredPatients.length > 0 && (
             <div className="mt-6 flex flex-col items-end gap-4">
@@ -916,7 +942,7 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
             </div>
           )}
 
-           {/* Charts Section */}
+          {/* Charts Section */}
           {status === "succeeded" && filteredPatients.length > 0 && (
             <div className="mt-8">
               <div
@@ -925,14 +951,14 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
                 } shadow-md flex flex-col md:flex-row gap-6`}
               >
                 <div className="flex-1 h-80">
-                  <Bar 
+                  <Bar
                     data={getAgeDistribution()}
                     options={chartOptions}
                     aria-label="Patient Age Distribution Bar Chart"
                   />
                 </div>
                 <div className="flex-1 h-80">
-                  <Pie 
+                  <Pie
                     data={getGenderDistribution()}
                     options={pieChartOptions}
                     aria-label="Patient Gender Distribution Pie Chart"
@@ -944,283 +970,357 @@ const handlePrintWaitingNumber = (patient, allPatients) => {
         </div>
       </div>
       {showCreateModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" data-aos="fade-down" role="dialog" aria-labelledby="createModalTitle" aria-modal="true">
-    <div
-      className={`rounded-xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 ease-in-out ${
-        isDark ? "bg-gray-800" : "bg-white"
-      } max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200`}
-    >
-      <div
-        className={`p-5 border-b rounded-t-xl ${
-          isDark
-            ? "border-gray-700 bg-gray-900"
-            : "border-gray-200 bg-teal-50"
-        } flex justify-between items-center sticky top-0 z-10`}
-      >
-        <h2 id="createModalTitle" className="text-xl font-bold flex items-center gap-3">
-          <PlusIcon className="w-5 h-5 text-teal-600" />
-          <span className={isDark ? "text-teal-400" : "text-teal-800"}>New Patient Registration</span>
-        </h2>
-        <button
-          type="button"
-          onClick={() => setShowCreateModal(false)}
-          className={`rounded-full p-1 focus:outline-none focus:ring-2 ${
-            isDark ? "focus:ring-teal-500 text-gray-300 hover:text-white" : "focus:ring-teal-300 text-gray-500 hover:text-gray-700"
-          }`}
-          aria-label="Close modal"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4"
+          data-aos="fade-down"
+          role="dialog"
+          aria-labelledby="createModalTitle"
+          aria-modal="true"
         >
-          <XMarkIcon className="w-6 h-6" />
-        </button>
-      </div>
-      <form onSubmit={handleSave} className="p-5">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Name Field */}
-          <div className="space-y-1 col-span-1">
-            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
-              Full Name <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={patient}
-              onChange={(e) => setPatient(e.target.value)}
-              placeholder="John Doe"
-              required
-              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+          <div
+            className={`rounded-xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 ease-in-out ${
+              isDark ? "bg-gray-800" : "bg-white"
+            } max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200`}
+          >
+            <div
+              className={`p-5 border-b rounded-t-xl ${
                 isDark
-                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
-                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
-              } transition placeholder-gray-400`}
-              autoFocus
-              aria-required="true"
-            />
-          </div>
-
-          {/* Age Field */}
-          <div className="space-y-1">
-            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
-              Age <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              value={age}
-              onChange={(e) => setAge(e.target.value)}
-              placeholder="35"
-              min="1"
-              max="120"
-              required
-              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
-                isDark
-                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
-                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
-              } transition placeholder-gray-400`}
-              aria-required="true"
-            />
-          </div>
-
-          {/* Gender Field */}
-          <div className="space-y-1">
-            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
-              Gender <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={gender}
-              onChange={(e) => setGender(e.target.value)}
-              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
-                isDark
-                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
-                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
-              } transition`}
-              aria-required="true"
+                  ? "border-gray-700 bg-gray-900"
+                  : "border-gray-200 bg-teal-50"
+              } flex justify-between items-center sticky top-0 z-10`}
             >
-              <option value="" disabled>Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
+              <h2
+                id="createModalTitle"
+                className="text-xl font-bold flex items-center gap-3"
+              >
+                <PlusIcon className="w-5 h-5 text-teal-600" />
+                <span className={isDark ? "text-teal-400" : "text-teal-800"}>
+                  New Patient Registration
+                </span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className={`rounded-full p-1 focus:outline-none focus:ring-2 ${
+                  isDark
+                    ? "focus:ring-teal-500 text-gray-300 hover:text-white"
+                    : "focus:ring-teal-300 text-gray-500 hover:text-gray-700"
+                }`}
+                aria-label="Close modal"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleSave} className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Name Field */}
+                <div className="space-y-1 col-span-1">
+                  <label
+                    className={`block text-sm font-medium ${
+                      isDark ? "text-teal-300" : "text-teal-700"
+                    }`}
+                  >
+                    Full Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={patient}
+                    onChange={(e) => setPatient(e.target.value)}
+                    placeholder="John Doe"
+                    required
+                    className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                      isDark
+                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+                    } transition placeholder-gray-400`}
+                    autoFocus
+                    aria-required="true"
+                  />
+                </div>
 
-          {/* Phone Field */}
-          <div className="space-y-1 col-span-1">
-            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
-              Phone <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+1234567890"
-              required
-              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
-                isDark
-                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
-                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
-              } transition placeholder-gray-400`}
-              aria-required="true"
-            />
-          </div>
+                {/* Age Field */}
+                <div className="space-y-1">
+                  <label
+                    className={`block text-sm font-medium ${
+                      isDark ? "text-teal-300" : "text-teal-700"
+                    }`}
+                  >
+                    Age <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    placeholder="35"
+                    min="1"
+                    max="120"
+                    required
+                    className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                      isDark
+                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+                    } transition placeholder-gray-400`}
+                    aria-required="true"
+                  />
+                </div>
 
-          {/* Treatment Field */}
-        
+                {/* Gender Field */}
+                <div className="space-y-1">
+                  <label
+                    className={`block text-sm font-medium ${
+                      isDark ? "text-teal-300" : "text-teal-700"
+                    }`}
+                  >
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={gender}
+                    onChange={(e) => setGender(e.target.value)}
+                    className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                      isDark
+                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+                    } transition`}
+                    aria-required="true"
+                  >
+                    <option value="" disabled>
+                      Select gender
+                    </option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
 
-          {/* Career Field */}
-          <div className="space-y-1">
-            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
-              Occupation <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              value={career}
-              onChange={(e) => setCareer(e.target.value)}
-              placeholder="Dentist"
-              required
-              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
-                isDark
-                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
-                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
-              } transition placeholder-gray-400`}
-              aria-required="true"
-            />
-          </div>
+                {/* Phone Field */}
+                <div className="space-y-1 col-span-1">
+                  <label
+                    className={`block text-sm font-medium ${
+                      isDark ? "text-teal-300" : "text-teal-700"
+                    }`}
+                  >
+                    Phone <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+1234567890"
+                    required
+                    className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                      isDark
+                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+                    } transition placeholder-gray-400`}
+                    aria-required="true"
+                  />
+                </div>
 
-          {/* Status Field */}
-          <div className="space-y-1">
-            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
-              Status <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={statusState}
-              onChange={(e) => setStatus(e.target.value)}
-              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
-                isDark
-                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
-                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
-              } transition`}
-              aria-required="true"
-            >
-              <option value="" disabled>Select status</option>
-              <option value="active">Active</option>
-              <option value="recovered">Recovered</option>
-              <option value="chronic">Chronic</option>
-            </select>
-          </div>
+                {/* Treatment Field */}
 
-          {/* Province Field */}
-          <div className="space-y-1 col-span-1">
-            <label className={`block text-sm font-medium ${isDark ? "text-teal-300" : "text-teal-700"}`}>
-              Province <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={province}
-              onChange={(e) => setProvince(e.target.value)}
-              required
-              className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
-                isDark
-                  ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
-                  : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
-              } transition`}
-              aria-required="true"
-            >
-              <option value="" disabled>Select province</option>
-              {Array.isArray(provinces) &&
-                provinces.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-            </select>
+                {/* Career Field */}
+                <div className="space-y-1">
+                  <label
+                    className={`block text-sm font-medium ${
+                      isDark ? "text-teal-300" : "text-teal-700"
+                    }`}
+                  >
+                    Occupation <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={career}
+                    onChange={(e) => setCareer(e.target.value)}
+                    placeholder="Dentist"
+                    required
+                    className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                      isDark
+                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+                    } transition placeholder-gray-400`}
+                    aria-required="true"
+                  />
+                </div>
+
+                {/* Status Field */}
+                <div className="space-y-1">
+                  <label
+                    className={`block text-sm font-medium ${
+                      isDark ? "text-teal-300" : "text-teal-700"
+                    }`}
+                  >
+                    Status <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={statusState}
+                    onChange={(e) => setStatus(e.target.value)}
+                    className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                      isDark
+                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+                    } transition`}
+                    aria-required="true"
+                  >
+                    <option value="" disabled>
+                      Select status
+                    </option>
+                    <option value="active">Active</option>
+                    <option value="recovered">Recovered</option>
+                    <option value="chronic">Chronic</option>
+                  </select>
+                </div>
+
+                {/* Province Field */}
+                <div className="space-y-1 col-span-1">
+                  <label
+                    className={`block text-sm font-medium ${
+                      isDark ? "text-teal-300" : "text-teal-700"
+                    }`}
+                  >
+                    Province <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={province}
+                    onChange={(e) => setProvince(e.target.value)}
+                    required
+                    className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
+                      isDark
+                        ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
+                        : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
+                    } transition`}
+                    aria-required="true"
+                  >
+                    <option value="" disabled>
+                      Select province
+                    </option>
+                    {Array.isArray(provinces) &&
+                      provinces.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className={`px-5 py-2 rounded-lg font-medium text-sm ${
+                    isDark
+                      ? "border border-gray-600 text-gray-200 hover:bg-gray-700"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  } transition focus:outline-none focus:ring-2 focus:ring-teal-300`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={
+                    !patient ||
+                    !age ||
+                    !gender ||
+                    !phone ||
+                    !career ||
+                    !statusState ||
+                    !province
+                  }
+                  className={`px-5 py-2 rounded-lg font-semibold text-sm ${
+                    isDark
+                      ? "bg-teal-600 hover:bg-teal-700 text-white"
+                      : "bg-teal-500 hover:bg-teal-600 text-white"
+                  } transition focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-md`}
+                >
+                  Register Patient
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-        
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={() => setShowCreateModal(false)}
-            className={`px-5 py-2 rounded-lg font-medium text-sm ${
-              isDark
-                ? "border border-gray-600 text-gray-200 hover:bg-gray-700"
-                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-            } transition focus:outline-none focus:ring-2 focus:ring-teal-300`}
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!patient || !age || !gender || !phone ||  !career || !statusState || !province}
-            className={`px-5 py-2 rounded-lg font-semibold text-sm ${
-              isDark 
-                ? "bg-teal-600 hover:bg-teal-700 text-white"
-                : "bg-teal-500 hover:bg-teal-600 text-white"
-            } transition focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-md`}
-          >
-            Register Patient
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
 
-{showEditModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4" role="dialog" aria-labelledby="editModalTitle" aria-modal="true">
-    <div
-      className={`rounded-xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 ease-in-out ${
-        isDark ? "bg-gray-800" : "bg-white"
-      } max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200`}
-    >
-      <div
-        className={`p-5 border-b rounded-t-xl ${
-          isDark
-            ? "border-gray-700 bg-gray-900"
-            : "border-gray-200 bg-teal-50"
-        } flex justify-between items-center sticky top-0 z-10`}
-      >
-        <h2 id="editModalTitle" className="text-xl font-bold flex items-center gap-3">
-          <PencilIcon className="w-5 h-5 text-teal-600" />
-          <span className={isDark ? "text-teal-400" : "text-teal-800"}>Edit Patient Record</span>
-        </h2>
-        <button
-          type="button"
-          onClick={() => setShowEditModal(false)}
-          className={`rounded-full p-1 focus:outline-none focus:ring-2 ${
-            isDark ? "focus:ring-teal-500 text-gray-300 hover:text-white" : "focus:ring-teal-300 text-gray-500 hover:text-gray-700"
-          }`}
-          aria-label="Close modal"
+      {showEditModal && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4"
+          role="dialog"
+          aria-labelledby="editModalTitle"
+          aria-modal="true"
         >
-          <XMarkIcon className="w-6 h-6" />
-        </button>
-      </div>
-      <form onSubmit={handleUpdate} className="p-5">
-        {/* Same form fields as create modal */}
-        {/* ... */}
-        
-        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
-          <button
-            type="button"
-            onClick={() => setShowEditModal(false)}
-            className={`px-5 py-2 rounded-lg font-medium text-sm ${
-              isDark
-                ? "border border-gray-600 text-gray-200 hover:bg-gray-700"
-                : "border border-gray-300 text-gray-700 hover:bg-gray-50"
-            } transition focus:outline-none focus:ring-2 focus:ring-teal-300`}
+          <div
+            className={`rounded-xl shadow-2xl w-full max-w-4xl transform transition-all duration-300 ease-in-out ${
+              isDark ? "bg-gray-800" : "bg-white"
+            } max-h-[85vh] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200`}
           >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={!patient || !age || !gender || !phone ||  !career || !statusState || !province}
-            className={`px-5 py-2 rounded-lg font-semibold text-sm ${
-              isDark 
-                ? "bg-teal-600 hover:bg-teal-700 text-white"
-                : "bg-teal-500 hover:bg-teal-600 text-white"
-            } transition focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-md`}
-          >
-            Save Changes
-          </button>
+            <div
+              className={`p-5 border-b rounded-t-xl ${
+                isDark
+                  ? "border-gray-700 bg-gray-900"
+                  : "border-gray-200 bg-teal-50"
+              } flex justify-between items-center sticky top-0 z-10`}
+            >
+              <h2
+                id="editModalTitle"
+                className="text-xl font-bold flex items-center gap-3"
+              >
+                <PencilIcon className="w-5 h-5 text-teal-600" />
+                <span className={isDark ? "text-teal-400" : "text-teal-800"}>
+                  Edit Patient Record
+                </span>
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className={`rounded-full p-1 focus:outline-none focus:ring-2 ${
+                  isDark
+                    ? "focus:ring-teal-500 text-gray-300 hover:text-white"
+                    : "focus:ring-teal-300 text-gray-500 hover:text-gray-700"
+                }`}
+                aria-label="Close modal"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdate} className="p-5">
+              {/* Same form fields as create modal */}
+              {/* ... */}
+
+              <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className={`px-5 py-2 rounded-lg font-medium text-sm ${
+                    isDark
+                      ? "border border-gray-600 text-gray-200 hover:bg-gray-700"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  } transition focus:outline-none focus:ring-2 focus:ring-teal-300`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={
+                    !patient ||
+                    !age ||
+                    !gender ||
+                    !phone ||
+                    !career ||
+                    !statusState ||
+                    !province
+                  }
+                  className={`px-5 py-2 rounded-lg font-semibold text-sm ${
+                    isDark
+                      ? "bg-teal-600 hover:bg-teal-700 text-white"
+                      : "bg-teal-500 hover:bg-teal-600 text-white"
+                  } transition focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-md`}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 }

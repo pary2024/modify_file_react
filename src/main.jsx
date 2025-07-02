@@ -4,8 +4,8 @@ import './index.css'
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { ThemeProvider } from "./Colors/Thems"; // make sure path is correct
-import store from './Stores/store';
+import { ThemeProvider } from "./Colors/Themes"; // make sure path is correct
+import store from './Stores/stores';
 import { Provider } from 'react-redux';
 
 ReactDOM.createRoot(document.getElementById("root")).render(
