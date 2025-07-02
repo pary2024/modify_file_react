@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import material from '../service/material';
+import material from '../Services/material';
 
 // Async thunks for each API call
 export const fetchMaterials = createAsyncThunk('material/fetchMaterials', async (_, { rejectWithValue }) => {

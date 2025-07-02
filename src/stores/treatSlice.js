@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import treat from '../service/treat'; // adjust path as needed
+import treat from '../Services/treat'; // adjust path as needed
 
 // Thunks
 export const fetchTreats = createAsyncThunk('treat/fetchTreats', async (_, thunkAPI) => {

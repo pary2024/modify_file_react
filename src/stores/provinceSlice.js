@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import province from '../service/province';
+import province from '../Services/province';
 
 // Async Thunks with rejectWithValue
 export const fetchProvinces = createAsyncThunk(

@@ -1,6 +1,6 @@
 // src/stores/patientSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import patient from '../service/patient';
+import patient from '../Services/patient';
 
 // Async Thunks
 export const fetchPatients = createAsyncThunk(

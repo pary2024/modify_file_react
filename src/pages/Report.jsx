@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { ThemeContext } from '../colors/Thems';
+import { ThemeContext } from '../Colors/Thems';
 import { Line, PolarArea, Doughnut, Bar, Pie,Radar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -16,7 +16,7 @@ import {
   Title,
 } from 'chart.js';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchReports } from '../stores/reportSlice';
+import { fetchReports } from '../Stores/reportSlice';
 
 ChartJS.register(
   PointElement,

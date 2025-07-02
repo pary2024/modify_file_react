@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import user from '../service/user'; // adjust path as needed
+import user from '../Services/user'; // adjust path as needed
 
 // Thunks
 export const fetchUsers = createAsyncThunk('user/fetchUsers', async (_, thunkAPI) => {

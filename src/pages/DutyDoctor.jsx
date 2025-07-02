@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createDuty, fetchDutys } from '../stores/dutyDoctorSlice';
+import { createDuty, fetchDutys } from '../Stores/dutyDoctorSlice';
 import { FaUserMd, FaUser, FaClinicMedical, FaPlus, FaSearch, FaCalendarAlt, FaTimes, FaTeeth, FaUserInjured, FaSave, FaPrint } from 'react-icons/fa';
 import { MdEdit, MdDelete } from 'react-icons/md';
-import { fetchTreats } from '../stores/treatSlice';
-import { fetchDoctors } from '../stores/doctorSlice';
-import { fetchPatients } from '../stores/patientSlice';
+import { fetchTreats } from '../Stores/treatSlice';
+import { fetchDoctors } from '../Stores/doctorSlice';
+import { fetchPatients } from '../Stores/patientSlice';
 import { ToastContainer, toast } from 'react-toastify';
 
 const DutyDoctor = () => {

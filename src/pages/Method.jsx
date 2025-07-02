@@ -20,10 +20,10 @@ import {
 import { FiEdit2, FiTrash2, FiFileText, FiLoader,FiSave, FiX, FiInfo  } from 'react-icons/fi';
 
 import moment from 'moment';
-import { ThemeContext } from '../colors/Thems';
+import { ThemeContext } from '../Colors/Thems';
 import useSelection from 'antd/es/table/hooks/useSelection';
 import { useDispatch, useSelector } from 'react-redux';
-import { createPay, fetchPays } from '../stores/paySlice';
+import { createPay, fetchPays } from '../Stores/paySlice';
  // Make sure you import your API instance if using Axios
 
 const { Title } = Typography;

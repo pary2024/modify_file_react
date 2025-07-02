@@ -70,14 +70,6 @@ const Sidebar = () => {
     { label: "Material", icon: <MdBuild />, href: "/admin/material" },     // Material -> tools/building
     { label: "Lab", icon: <MdBiotech />, href: "/admin/lab" },             // Lab -> biotech/test
     { label: "Report", icon: <FaFileAlt />, href: "/admin/report" },
-    // { label: "Student", icon: <FaUserGraduate />, href: "/admin/student" },
-    // { label: "Human Resources", icon: <MdPeopleAlt />, href: "/admin/human" },
-    // {
-    //   label: "Financial Activities",
-    //   icon: <MdAttachMoney />,
-    //   href: "/admin/finance",
-    // },
-    // { label: "SMS", icon: <MdSms />, href: "/admin/sms" },
     
     // Admin-only routes
     {
@@ -86,11 +78,7 @@ const Sidebar = () => {
       href: "/admin/user",
     },
     { label: "Method", icon: <MdScience />, href: "/admin/method" },       // Method -> science/research
-    // {
-    //   label: "School",
-    //   icon: <MdSchool />,
-    //   href: "/admin/school",
-    // },
+    
     {
       label: "Province",
       icon: <MdMap />,

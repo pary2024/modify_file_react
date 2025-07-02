@@ -1,19 +1,19 @@
 // src/app/store.js or src/store.js
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from "../stores/authSlice";
-import userReducer from "../stores/userSlice";
-import treatReducer from "../stores/treatSlice";
-import doctorReducer from "../stores/doctorSlice";
-import appointmentPatientReducer from "../stores/appointmentPatientSlice";
-import invoicePatientReducer from "../stores/invoicePatientSlice";
-import patientReducer from "../stores/patientSlice";
-import payReducer from"../stores/paySlice";
-import provinceReducer from"../stores/provinceSlice";
-import companyReducer from "../stores/companySlice";
-import reportReducer from "../stores/reportSlice";
-import dutyDoctorReducer from "../stores/dutyDoctorSlice";
-import labReducer from "../stores/labSlice";
-import materialReducer from "../stores/materialSlice";
+import authReducer from "../Stores/authSlice";
+import userReducer from "../Stores/userSlice";
+import treatReducer from "../Stores/treatSlice";
+import doctorReducer from "../Stores/doctorSlice";
+import appointmentPatientReducer from "../Stores/appointmentPatientSlice";
+import invoicePatientReducer from "../Stores/invoicePatientSlice";
+import patientReducer from "../Stores/patientSlice";
+import payReducer from"../Stores/paySlice";
+import provinceReducer from"../Stores/provinceSlice";
+import companyReducer from "../Stores/companySlice";
+import reportReducer from "../Stores/reportSlice";
+import dutyDoctorReducer from "../Stores/dutyDoctorSlice";
+import labReducer from "../Stores/labSlice";
+import materialReducer from "../Stores/materialSlice";
 
 const store = configureStore({
   reducer: {

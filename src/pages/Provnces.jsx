@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { ThemeContext } from '../colors/Thems';
+import { ThemeContext } from '../Colors/Thems';
 import { useDispatch, useSelector } from 'react-redux';
-import { createProvince, deleteProvince, fetchProvinces } from '../stores/provinceSlice';
+import { createProvince, deleteProvince, fetchProvinces } from '../Stores/provinceSlice';
 const Provinces = () => {
   const { isDark } = useContext(ThemeContext);
 

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import pay from '../service/pay';
+import pay from '../Services/pay';
 
 // Async Thunks
 export const fetchPays = createAsyncThunk(

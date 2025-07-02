@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import appointmentPatient from '../service/appointmentPatient';
+import appointmentPatient from '../Services/appointmentPatient';
 
 // Async Thunks with rejectWithValue
 export const fetchAppointmentPatients = createAsyncThunk(

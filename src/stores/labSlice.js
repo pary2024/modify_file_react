@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import lab from '../service/lab';
+import lab from '../Services/lab';
 
 // Async thunks for each API call
 export const fetchLabs = createAsyncThunk('lab/fetchLabs', async (_, { rejectWithValue }) => {

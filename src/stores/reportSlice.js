@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import report from '../service/report';
+import report from '../Services/report';
 
 export const fetchReports = createAsyncThunk(
   'report/fetchReports',

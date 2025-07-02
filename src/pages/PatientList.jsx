@@ -21,7 +21,7 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/solid";
 import { FaSearch } from "react-icons/fa";
-import { ThemeContext } from "../colors/Thems";
+import { ThemeContext } from "../Colors/Thems";
 import * as XLSX from "xlsx";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
@@ -42,10 +42,10 @@ import {
   createPatient,
   updatePatient,
   deletePatient,
-} from "../stores/patientSlice";
+} from "../Stores/patientSlice";
 import Swal from 'sweetalert2';
-import { fetchProvinces } from "../stores/provinceSlice";
-import { fetchTreats } from "../stores/treatSlice";
+import { fetchProvinces } from "../Stores/provinceSlice";
+
 
 // Register Chart.js components
 ChartJS.register(
@@ -63,7 +63,7 @@ export default function PatientList() {
   const dispatch = useDispatch();
   const { patients, status, error } = useSelector((state) => state.patient);
   const { provinces } = useSelector((state) => state.province);
-  const { treats } = useSelector((state) => state.treat);
+ 
   const [editingId, setEditingId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);

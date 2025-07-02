@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { Pencil, Trash2, Plus, Stethoscope, Mail, User, X } from "lucide-react";
-import { ThemeContext } from "../colors/Thems";
+import { ThemeContext } from "../Colors/Thems";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from 'react-router-dom';
 import { UserPlusIcon } from '@heroicons/react/24/solid'; // or '24/outline'
 import { ToastContainer,  toast } from 'react-toastify';
-import { createDoctor, deleteDoctor, fetchDoctors } from "../stores/doctorSlice";
+import { createDoctor, deleteDoctor, fetchDoctors } from "../Stores/doctorSlice";
 import * as XLSX from "xlsx";
 
 const Doctor = () => {

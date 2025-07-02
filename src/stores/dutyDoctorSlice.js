@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import dutyDoctor from '../service/dutyDoctor';
+import dutyDoctor from '../Services/dutyDoctor';
 
 // Async thunks for each API call
 export const fetchDutys = createAsyncThunk('dutyDoctor/fetchDutys', async (_, { rejectWithValue }) => {

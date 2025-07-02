@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import doctor from '../service/doctor'; // Adjust the path based on your structure
+import doctor from '../Services/doctor'; // Adjust the path based on your structure
 
 // Async Thunks
 export const fetchDoctors = createAsyncThunk('doctor/fetchDoctors', async (_, thunkAPI) => {

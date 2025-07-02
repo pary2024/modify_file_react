@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ThemeContext } from "../colors/Thems";
+import { ThemeContext } from "../Colors/Thems";
 import {
   FaUserMd, FaUsers, FaFileInvoiceDollar, FaCalendarAlt,
   FaProcedures, FaChartLine,FaSearch,FaBell,FaUserCircle,
