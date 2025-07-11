@@ -1,22 +1,25 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createDuty, fetchDutys } from '../Stores/dutyDoctorSlice';
+import { createDuty, fetchDuty, fetchDutys } from '../Stores/dutyDoctorSlice';
 import { FaUserMd, FaUser, FaClinicMedical, FaPlus, FaSearch, FaCalendarAlt, FaTimes, FaTeeth, FaUserInjured, FaSave, FaPrint } from 'react-icons/fa';
 import { MdEdit, MdDelete } from 'react-icons/md';
 import { fetchTreats } from '../Stores/treatSlice';
 import { fetchDoctors } from '../Stores/doctorSlice';
 import { fetchPatients } from '../Stores/patientSlice';
 import { ToastContainer, toast } from 'react-toastify';
-
 const DutyDoctor = () => {
   const dispatch = useDispatch();
   const { duties = [], loading, error } = useSelector((state) => state.duty || {});
+  
   const { treats } = useSelector((state) => state.treat || {});
   const { doctors } = useSelector((state) => state.doctor || {});
   const { patients } = useSelector((state) => state.patient || {});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEdit, setIsEdit] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [printDuty, setPrintDuty] = useState(null);
+  
 
   const [patientId, setPatient] = useState('');
   const [doctorId, setDoctor] = useState('');
@@ -28,7 +31,7 @@ const DutyDoctor = () => {
     dispatch(fetchDutys());
     dispatch(fetchTreats());
     dispatch(fetchDoctors());
-    dispatch(fetchPatients());
+    dispatch(fetchPatients());   
   }, [dispatch]);
 
   const handleSave = async () => {
@@ -325,6 +328,10 @@ const DutyDoctor = () => {
             <div class="info-row">
               <div class="label">Receipt No:</div>
               <div class="value important">#${duty.id || '0000'}</div>
+            </div>
+            <div class="info-row">
+              <div class="label">លេខធ្មេញ:</div>
+              <div class="value important">..............</div>
             </div>
           </div>
 
@@ -638,15 +645,7 @@ const DutyDoctor = () => {
                 className="pl-10 pr-4 py-2 w-[500px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
-            <div className="flex items-center bg-gray-100 px-4 py-2 rounded-lg">
-              <FaCalendarAlt className="text-gray-500 mr-2" />
-              <select className="bg-transparent outline-none text-gray-700">
-                <option>All Time</option>
-                <option>Today</option>
-                <option>This Week</option>
-                <option>This Month</option>
-              </select>
-            </div>
+            
           </div>
         </div>
 
@@ -795,9 +794,11 @@ const DutyDoctor = () => {
                             <FaPrint className="inline" />
                           </button>
                         )}
-                        <button className="text-blue-600 hover:text-blue-900 mr-3">
-                          <MdEdit className="inline" />
-                        </button>
+                      <a href={`/admin/edite/duty/${duty.id}`} className='text-blue-600 hover:text-blue-900 mr-3'>
+                            <MdEdit className="inline" />
+                          </a>
+
+
                         <button className="text-red-600 hover:text-red-900">
                           <MdDelete className="inline" />
                         </button>
@@ -813,6 +814,9 @@ const DutyDoctor = () => {
 
       {/* Create Duty Modal */}
       <CreateDutyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      {/* <EditeDutyModal isOpen={isEdit} onClose={() => setIsEdit(false)} id={selectedId} /> */}
+
+     
       
       {/* Print Treatment Modal */}
       {printDuty && (

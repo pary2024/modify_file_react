@@ -10,7 +10,7 @@ export const loginUser = createAsyncThunk(
       const data = response.data;
 
       const token = data.token;
-      const roles = data.roles; // should be an array like ["admin", "editor"]
+      const roles = data.roles; 
       
 
       if (!token || !Array.isArray(roles)) {
@@ -21,6 +21,7 @@ export const loginUser = createAsyncThunk(
       localStorage.setItem('token', token);
       localStorage.setItem('roles', roles); 
       localStorage.setItem('company', credentials.company); 
+     
       
       
 

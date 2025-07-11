@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@routes': path.resolve(__dirname, 'src/Routes'),
+      '@stores': path.resolve(__dirname, 'src/Stores'), // add this line for Stores folder
     },
   },
 });

@@ -19,6 +19,7 @@ import {
   FiXCircle,
   FiLoader,
   FiFileText,
+  
 } from "react-icons/fi";
 import { format } from "date-fns";
 import { ThemeContext } from "../Colors/Themes";
@@ -387,9 +388,9 @@ const Payment = () => {
   useEffect(() => {
     dispatch(fetchPatients());
     dispatch(fetchTreats());
-    dispatch(fetchInvoicePatients());
     dispatch(fetchPays());
     dispatch(fetchDoctors());
+    dispatch(fetchInvoicePatients());
   }, [dispatch]);
 
   console.log("invoice patient status", invoicePatients.status);
@@ -1014,28 +1015,25 @@ const Payment = () => {
 
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-1">
-                            <button
-                              onClick={() => handleEditPayment(payment)}
-                              className={`p-2 rounded-md transition-colors ${
+                            <a href={`/admin/edite/invoice/${payment.id}`} className={`p-2 rounded-md transition-colors ${
                                 isDark
                                   ? "text-gray-300 hover:bg-gray-700 hover:text-white"
                                   : "text-gray-500 hover:bg-gray-100 hover:text-orange-600"
-                              }`}
-                              title="Edit"
-                            >
-                              <FiEdit2 className="h-4 w-4" />
-                            </button>
+                              }`}>
+                                 <FiEdit2  className="h-4 w-4" />
+                              </a>
                             <button
-                              onClick={() => setSelectedPayment(payment)}
-                              className={`p-2 rounded-md transition-colors ${
-                                isDark
-                                  ? "text-blue-400 hover:bg-gray-700 hover:text-blue-300"
-                                  : "text-blue-600 hover:bg-gray-100 hover:text-blue-700"
-                              }`}
-                              title="View Invoice"
-                            >
-                              <FiDollarSign className="h-4 w-4" />
-                            </button>
+                                onClick={() => setSelectedPayment(payment)}
+                                className={`p-2 rounded-md transition-colors ${
+                                  isDark
+                                   ? "text-blue-400 hover:bg-gray-700 hover:text-blue-300"
+                                    : "text-blue-600 hover:bg-gray-100 hover:text-blue-700"
+                                }`}
+                                title="Print Invoice"
+                              >
+                                <FiPrinter className="h-4 w-4" />
+                              </button>
+
                             <button
                               onClick={() => handleDeletePayment(payment.id)}
                               className={`p-2 rounded-md transition-colors ${
@@ -1308,12 +1306,12 @@ const Payment = () => {
                   $
                   {Array.isArray(invoicePatients)
                     ? invoicePatients
-                        .filter((p) => p.status !== "paid")
+                        .filter((p) => p.status == "pending")
                         .reduce(
                           (sum, p) =>
                             sum +
                             (parseFloat(p.total || 0) -
-                              parseFloat(p.deposit || 0)),
+                              parseFloat(p.debt || 0)),
                           0
                         )
                     : "0.00"}
@@ -1325,13 +1323,13 @@ const Payment = () => {
                 }`}
               >
                 <h3 className="text-sm font-medium text-gray-500">
-                  Pending Amount
+                  Unpaid Amount
                 </h3>
                 <p className="text-2xl font-bold mt-1 text-red-600">
                   $
                   {Array.isArray(invoicePatients)
                     ? invoicePatients
-                        .filter((p) => p.status !== "paid")
+                        .filter((p) => p.status   == "unpaid")
                         .reduce(
                           (sum, p) =>
                             sum +
@@ -1471,11 +1469,11 @@ const Invoice = ({ onClose, invoice }) => {
             <div class="clinic-info">
               <div class="clinic-name">${companyName}</div>
               <div class="clinic-details">
-                <p>123 Dental Street, Smile City</p>
-                <p>Phone: (123) 456-7890 | Tax ID: 123-456-789</p>
-                <p>Email: contact@${companyName
+                <p>${invoice?.company?.address}</p>
+                <p>Phone: ${invoice?.company?.phone}</p>
+                <p>Email: ${invoice?.company?.email
                   ?.toLowerCase()
-                  ?.replace(/\s+/g, "")}.com</p>
+                  ?.replace(/\s+/g, "")}</p>
               </div>
             </div>
           </div>

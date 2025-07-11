@@ -19,7 +19,7 @@ export const fetchInvoicePatientById = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await invoicePatient.getInvoicePatient(id);
-      return response.data;
+      return response.data.invoicePatient;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch invoice patient by ID');
     }

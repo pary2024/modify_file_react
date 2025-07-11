@@ -19,6 +19,8 @@ import Lab from "./Pages/Lab";
 import Material from "./Pages/Material";
 import PrivateRoute from "./Routes/PrivateRouter";
 import Dash from "./Pages/Dash";
+import EditeDuty from "./Pages/Update/updateDuty";
+import PaymentEdit from "./Pages/Update/UpdateInvoice";
 function App() {
   useEffect(() => {
     Aos.init({
@@ -50,6 +52,8 @@ function App() {
             <Route path="dutyDoctor" element={<DutyDoctor />} />
             <Route path="lab" element={<Lab />} />
             <Route path="material" element={<Material />} />
+            <Route path="edite/duty/:id" element={<EditeDuty/>}/>
+            <Route path="edite/invoice/:id" element={<PaymentEdit/>}/>
           </Route>
         </Route>
       </Routes>

@@ -14,7 +14,7 @@ export const fetchDutys = createAsyncThunk('dutyDoctor/fetchDutys', async (_, { 
 export const fetchDuty = createAsyncThunk('dutyDoctor/fetchDuty', async (id, { rejectWithValue }) => {
   try {
     const response = await dutyDoctor.getDuty(id);
-    return response.data;
+    return response.data.dutyDoctor;
   } catch (error) {
     return rejectWithValue(error.response?.data || error.message);
   }

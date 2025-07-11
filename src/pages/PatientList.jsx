@@ -226,20 +226,18 @@ export default function PatientList() {
   };
 
   // Pass full patient list and current patient to this function
-  const handlePrintWaitingNumber = (patient, allPatients) => {
-    const sortedPatients = allPatients
-      .filter((p) => p.created_at) // only registered patients
-      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  const handlePrintWaitingNumber = (patient) => {
+  const waitingNumber = patient.daily_number || "#";
 
-    const index = sortedPatients.findIndex((p) => p.id === patient.id);
-    const waitingNumber = index !== -1 ? index + 1 : `#`;
+  const date = dayjs(patient.created_at || new Date()).format("YYYY-MM-DD HH:mm");
 
-    const date = dayjs(
-      patient.created_at || patient.create_at || new Date()
-    ).format("YYYY-MM-DD HH:mm");
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    alert("Please allow pop-ups to print.");
+    return;
+  }
 
-    const printWindow = window.open("", "_blank");
-    printWindow.document.write(`
+  printWindow.document.write(`
     <html>
       <head>
         <title>Waiting Number</title>
@@ -309,8 +307,9 @@ export default function PatientList() {
       </body>
     </html>
   `);
-    printWindow.document.close();
-  };
+  printWindow.document.close();
+};
+
 
   const exportToExcel = () => {
     const dataForExport = filteredPatients.map((patient) => ({
@@ -626,7 +625,7 @@ export default function PatientList() {
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider  border"
                   >
                     <div className="flex items-center gap-2">
                       <IdentificationIcon className="w-4 h-4" />
@@ -635,7 +634,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider  border"
                   >
                     <div className="flex items-center gap-2">
                       <UserIcon className="w-4 h-4" />
@@ -644,7 +643,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider  border"
                   >
                     <div className="flex items-center gap-2">
                       <CalendarIcon className="w-4 h-4" />
@@ -653,7 +652,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider  border"
                   >
                     <div className="flex items-center gap-2">
                       <UserIcon className="w-4 h-4" />
@@ -662,7 +661,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider  border"
                   >
                     <div className="flex items-center gap-2">
                       <PhoneIcon className="w-4 h-4" />
@@ -672,7 +671,7 @@ export default function PatientList() {
 
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider  border"
                   >
                     <div className="flex items-center gap-2">
                       <ClipboardDocumentListIcon className="w-4 h-4" />
@@ -681,7 +680,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase  border"
                   >
                     <div className="flex items-center gap-2">
                       <ClockIcon className="w-4 h-4" />
@@ -690,7 +689,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase  border"
                   >
                     <div className="flex items-center gap-2">
                       <ClockIcon className="w-4 h-4" />
@@ -699,7 +698,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase  border"
                   >
                     <div className="flex items-center gap-2">
                       <MapPinIcon className="w-4 h-4" />
@@ -708,7 +707,7 @@ export default function PatientList() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium uppercase"
+                    className="px-6 py-3 text-left text-xs font-medium uppercase  border"
                   >
                     <div className="flex items-center gap-2">
                       <Cog6ToothIcon className="w-4 h-4" />
@@ -724,7 +723,7 @@ export default function PatientList() {
               >
                 {status === "loading" && (
                   <tr>
-                    <td colSpan="11" className="px-6 py-4 text-center text-sm">
+                    <td colSpan="11" className="px-6 py-4 text-center text-sm  border">
                       <div
                         className={`p-8 text-center ${
                           isDark ? "text-gray-400" : "text-gray-500"
@@ -737,7 +736,7 @@ export default function PatientList() {
                 )}
                 {status === "failed" && (
                   <tr>
-                    <td colSpan="11" className="px-6 py-4 text-center text-sm">
+                    <td colSpan="11" className="px-6 py-4 text-center text-sm  border">
                       <div
                         className={`p-8 text-center ${
                           isDark ? "text-red-400" : "text-red-500"
@@ -756,22 +755,22 @@ export default function PatientList() {
                         isDark ? "bg-gray-700" : "bg-gray-50"
                       }`}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-mono font-medium  border">
                         DT{p.id}
                       </td>
-                      <td className="px-9 py-4 whitespace-nowrap text-sm">
+                      <td className="px-9 py-4 whitespace-nowrap text-sm  border">
                         {p.name}
                       </td>
-                      <td className="px-12 py-4 whitespace-nowrap text-sm">
-                        {p.age}
+                      <td className="px-12 py-4 whitespace-nowrap text-sm  border">
+                        {p.age || "Unknown"}
                       </td>
-                      <td className="px-12 py-4 whitespace-nowrap text-sm">
+                      <td className="px-12 py-4 whitespace-nowrap text-sm  border">
                         {p.gender}
                       </td>
-                      <td className="px-7 py-4 whitespace-nowrap text-sm">
+                      <td className="px-7 py-4 whitespace-nowrap text-sm  border">
                         {p.phone}
                       </td>
-                      <td className="px-10 py-4 whitespace-nowrap text-sm">
+                      <td className="px-10 py-4 whitespace-nowrap text-sm  border">
                         <span
                           className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                             p.status === "active"
@@ -794,18 +793,18 @@ export default function PatientList() {
                           {p.status}
                         </span>
                       </td>
-                      <td className="px-11 py-4 whitespace-nowrap text-sm">
+                      <td className="px-11 py-4 whitespace-nowrap text-sm  border">
                         {p.created_at
                           ? dayjs(p.created_at).format("YYYY-MM-DD HH:mm:ss")
                           : ""}
                       </td>
-                      <td className="px-12 py-4 whitespace-nowrap text-sm">
+                      <td className="px-12 py-4 whitespace-nowrap text-sm  border">
                         {p.career}
                       </td>
-                      <td className="px-12 py-4 whitespace-nowrap text-sm">
+                      <td className="px-12 py-4 whitespace-nowrap text-sm  border">
                         {p.province?.name || p.province}
                       </td>
-                      <td className="px-8 py-4 whitespace-nowrap text-sm font-medium">
+                      <td className="px-8 py-4 whitespace-nowrap text-sm font-medium  border">
                         <div className="flex items-center space-x-1">
                           <button
                             onClick={() => handleEdit(p)}
@@ -820,7 +819,7 @@ export default function PatientList() {
                           </button>
                           <button
                             onClick={() =>
-                              handlePrintWaitingNumber(p, patients)
+                              handlePrintWaitingNumber(p)
                             }
                             className={`p-2 rounded-full ${
                               isDark

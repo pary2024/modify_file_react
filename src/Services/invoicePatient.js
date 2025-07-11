@@ -4,7 +4,7 @@ const invoicePatient = {
   getInvoicePatients: () => api.get('/ip'),
   getInvoicePatient: (id) => api.get(`/ip/${id}`),
   createInvoicePatient: (data) => api.post('/ip', data),
-  updateInvoicePatient: (id, data) => api.put(`/ip/${id}`, data),
+  updateInvoicePatient: (id, data) => api.post(`/ip/${id}`, data),
   deleteInvoicePatient: (id) => api.delete(`/ip/${id}`),
 
 };

@@ -130,19 +130,19 @@ const Sidebar = () => {
         </div>
 
         {/* Menu Items */}
-        <ul className="space-y-1 flex-1">
+        <ul className=" flex-1  ">
           {menuItems.map((item, idx) => (
             <li key={idx}>
               <Link
                 to={item.href}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                className={`flex items-center gap-3 p-3  transition-all  b ${
                   isActive(item.href)
                     ? "bg-blue-400 shadow-md"
                     : "hover:bg-blue-300 hover:shadow-md"
                 }`}
               >
                 <span className="text-lg">{item.icon}</span>
-                <span>{item.label}</span>
+                <span >{item.label}</span>
               </Link>
             </li>
           ))}

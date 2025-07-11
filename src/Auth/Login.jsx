@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { loginUser } from '../stores/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { PlusIcon } from '@heroicons/react/24/solid';
+import { fetchCompanies } from '../stores/companySlice';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,6 +18,9 @@ const Login = () => {
   const {companies} = useSelector((state) => state.company);
   const fileInputRef = useRef(null);
 
+ 
+
+
     useEffect(() => {
     const savedImage = localStorage.getItem('companyImage');
     if (savedImage) {
@@ -26,6 +30,7 @@ const Login = () => {
   const handleClick = () => {
     fileInputRef.current.click();
   };
+ 
  const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -35,22 +40,18 @@ const Login = () => {
         setCompanyImage(base64String);
         localStorage.setItem('companyImage', base64String);
         
+        
       };
       reader.readAsDataURL(file);
     }
   };
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(''); // Clear previous errors
+    setError('');
     
     try {
       const result = await dispatch(loginUser({ email, password,company}));
       if (loginUser.fulfilled.match(result)) {
-         const companies = result.payload;
-        if (companies?.phone) {
-          localStorage.setItem('phone', companies.phone);
-        }
-        
         navigate('/admin');
       } else {
         setError(authError || 'Login failed. Please check your credentials.');

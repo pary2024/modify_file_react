@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { Pencil, Trash2, Plus, Stethoscope, Mail, User, X } from "lucide-react";
+import Calendar from 'react-calendar';
 import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -42,10 +43,8 @@ const Doctor = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Here you would typically dispatch an action to update/add a doctor
-    // For now, we'll just show an alert
-
-    setEditingId(null);
+    
+    
     setIsModalOpen(false);
 
     const newDoctor = {
@@ -55,10 +54,17 @@ const Doctor = () => {
       status: status,
       image: image,
     };
+    
     try {
       await dispatch(createDoctor(newDoctor));
       dispatch(fetchDoctors());
       toast.success("Doctor created successfully!", { position: "top-right" });
+      setName('');
+      setEmail('');
+      setSpeciatly('');
+      setImage(null);
+      setStatus('available');
+
     } catch (e) {
       toast.error(`Error creating doctor: ${e.message}`, {
         position: "top-right",
@@ -247,22 +253,22 @@ const Doctor = () => {
             isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
           } border`}
         >
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className={isDark ? "bg-teal-900/30" : "bg-teal-50"}>
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700 ">
+            <thead className={isDark ? "bg-teal-900/30" : "bg-teal-50"} >
+              <tr className="">
+                <th className=" border px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                   Doctor
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+                <th className=" border px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                   Specialty
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+                <th className=" border px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                   Contact
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
+                <th className=" border px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">
+                <th className=" border px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -275,7 +281,7 @@ const Doctor = () => {
                     isDark ? "hover:bg-gray-700/50" : "hover:bg-teal-50/30"
                   }`}
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap  border">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         <img
@@ -307,7 +313,7 @@ const Doctor = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className=" border px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div
                         className={`p-2 rounded-full ${
@@ -329,7 +335,7 @@ const Doctor = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className=" border px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <Mail
                         size={16}
@@ -344,7 +350,7 @@ const Doctor = () => {
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-6 py-4 whitespace-nowrap  border">
                     <span
                       className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         doc.status === "Available"
@@ -359,7 +365,7 @@ const Doctor = () => {
                       {doc.status || "Available"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium  border">
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={() => handleEdit(doc)}
@@ -453,15 +459,7 @@ const Doctor = () => {
                     <Mail size={16} className="flex-shrink-0" />
                     <span className="truncate">{doc.email}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Calendar size={16} className="flex-shrink-0" />
-                    <span>
-                      Joined:{" "}
-                      {doc.joinedDate
-                        ? new Date(doc.joinedDate).toLocaleDateString()
-                        : "N/A"}
-                    </span>
-                  </div>
+                  
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
