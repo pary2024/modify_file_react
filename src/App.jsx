@@ -19,7 +19,7 @@ import Lab from "./Pages/Lab";
 import Material from "./Pages/Material";
 import PrivateRoute from "./Routes/PrivateRouter";
 import Dash from "./Pages/Dash";
-import EditeDuty from "./Pages/Update/updateDuty";
+import EditeDuty from "./Pages/Update/UpdateDuty";
 import PaymentEdit from "./Pages/Update/UpdateInvoice";
 function App() {
   useEffect(() => {
