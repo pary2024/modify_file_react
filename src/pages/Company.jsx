@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { createCompany, deleteCompany, fetchCompanies } from "../Stores/companySlice";
+import { createCompany, deleteCompany, fetchCompanies } from "../stores/companySlice";
 import { cache } from "react";
 
 const Company = () => {
