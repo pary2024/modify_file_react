@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
-import { createAppointmentPatient, fetchAppointmentPatients } from "../Stores/appointmentPatientSlice";
-import { fetchDoctors } from "../Stores/doctorSlice";
-import { fetchPatients } from "../Stores/patientSlice";
+import { createAppointmentPatient, fetchAppointmentPatients } from "../stores/appointmentPatientSlice";
+import { fetchDoctors } from "../stores/doctorSlice";
+import { fetchPatients } from "../stores/patientSlice";
 import { ToastContainer,  toast } from 'react-toastify';
 
 const Appointment = () => {
