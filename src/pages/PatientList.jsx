@@ -42,9 +42,9 @@ import {
   createPatient,
   updatePatient,
   deletePatient,
-} from "../Stores/patientSlice";
+} from "../stores/patientSlice";
 import Swal from "sweetalert2";
-import { fetchProvinces } from "../Stores/provinceSlice";
+import { fetchProvinces } from "../stores/provinceSlice";
 
 // Register Chart.js components
 ChartJS.register(
