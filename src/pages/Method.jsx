@@ -31,7 +31,7 @@ import moment from "moment";
 import { ThemeContext } from "../Colors/Themes";
 import useSelection from "antd/es/table/hooks/useSelection";
 import { useDispatch, useSelector } from "react-redux";
-import { createPay, fetchPays } from "../Stores/paySlice";
+import { createPay, fetchPays } from "../stores/paySlice";
 // Make sure you import your API instance if using Axios
 
 const { Title } = Typography;
