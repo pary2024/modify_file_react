@@ -10,7 +10,7 @@ import {
   createDoctor,
   deleteDoctor,
   fetchDoctors,
-} from "../Stores/doctorSlice";
+} from "../stores/doctorSlice";
 import * as XLSX from "xlsx";
 
 const Doctor = () => {
