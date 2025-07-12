@@ -16,7 +16,7 @@ import {
   Title,
 } from "chart.js";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchReports } from "../Stores/reportSlice";
+import { fetchReports } from "../stores/reportSlice";
 
 ChartJS.register(
   PointElement,
