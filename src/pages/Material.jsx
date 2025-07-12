@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from "react";
 import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
-import { createMaterial, fetchMaterials } from "../Stores/materialSlice";
+import { createMaterial, fetchMaterials } from "../stores/materialSlice";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Plus, X, ChevronLeft, ChevronRight, Search, Info } from "lucide-react";
