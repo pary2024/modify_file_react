@@ -3,7 +3,7 @@ import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { fetchLabs, createLab } from "../Stores/labSlice";
+import { fetchLabs, createLab } from "../stores/labSlice";
 
 const LabReport = () => {
   const { isDark } = useContext(ThemeContext);
