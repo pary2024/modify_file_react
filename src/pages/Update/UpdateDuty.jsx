@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDuty, updateDuty } from "../../Stores/dutyDoctorSlice";
+import { fetchDuty, updateDuty } from "../../stores/dutyDoctorSlice";
 import { FaUserMd, FaUser, FaClinicMedical, FaPlus, FaSearch, FaCalendarAlt, FaTimes, FaTeeth, FaUserInjured, FaSave, FaPrint } from 'react-icons/fa';
 import { useNavigate, useParams } from "react-router";
-import { fetchDoctors } from "../../Stores/doctorSlice";
-import { fetchPatients } from "../../Stores/patientSlice";
-import { fetchTreats } from "../../Stores/treatSlice";
+import { fetchDoctors } from "../../stores/doctorSlice";
+import { fetchPatients } from "../../stores/patientSlice";
+import { fetchTreats } from "../../stores/treatSlice";
 import { ToastContainer, toast } from "react-toastify";
 
  const EditeDuty = () => {
