@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
-import { createTreat, fetchTreats } from "../Stores/treatSlice";
+import { createTreat, fetchTreats } from "../stores/treatSlice";
 
 const Treat = () => {
   const { isDark } = useContext(ThemeContext);
