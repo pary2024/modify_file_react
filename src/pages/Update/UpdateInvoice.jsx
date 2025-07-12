@@ -1,11 +1,11 @@
 import { useContext, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router";
-import { fetchInvoicePatientById, updateInvoicePatient } from "../../Stores/invoicePatientSlice";
-import { fetchPatients } from "../../Stores/patientSlice";
-import { fetchTreats } from "../../Stores/treatSlice";
-import { fetchPays } from "../../Stores/paySlice";
-import { fetchDoctors } from "../../Stores/doctorSlice";
+import { fetchInvoicePatientById, updateInvoicePatient } from "../../stores/invoicePatientSlice";
+import { fetchPatients } from "../../stores/patientSlice";
+import { fetchTreats } from "../../stores/treatSlice";
+import { fetchPays } from "../../stores/paySlice";
+import { fetchDoctors } from "../../stores/doctorSlice";
 import { ThemeContext } from "../../Colors/Themes";
 import { ToastContainer, toast } from "react-toastify";
 import {
