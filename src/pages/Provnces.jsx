@@ -5,7 +5,7 @@ import {
   createProvince,
   deleteProvince,
   fetchProvinces,
-} from "../Stores/provinceSlice";
+} from "../stores/provinceSlice";
 const Provinces = () => {
   const { isDark } = useContext(ThemeContext);
 
