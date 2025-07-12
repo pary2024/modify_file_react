@@ -1,26 +1,26 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Sidebar from "./Layouts/Sidebar";
-import PatientList from "./Pages/PatientList";
-import Appointment from "./Pages/Appointment";
-import Report from "./Pages/Report";
-import Doctor from "./Pages/Doctor";
+import PatientList from "./pages/PatientList";
+import Appointment from "./pages/Appointment";
+import Report from "./pages/Report";
+import Doctor from "./pages/Doctor";
 import Login from "./Auth/Login";
-import Payment from "./Pages/Payment";
-import UserManagement from "./Pages/UserManagement";
-import Company from "./Pages/Company";
-import Provinces from "./Pages/Provnces";
-import Treat from "./Pages/Treat";
-import PaymentMethod from "./Pages/Method";
+import Payment from "./pages/Payment";
+import UserManagement from "./pages/UserManagement";
+import Company from "./pages/Company";
+import Provinces from "./pages/Provnces";
+import Treat from "./pages/Treat";
+import PaymentMethod from "./pages/Method";
 import "aos/dist/aos.css";
 import Aos from "aos";
 import { useEffect } from "react";
-import DutyDoctor from "./Pages/DutyDoctor";
-import Lab from "./Pages/Lab";
-import Material from "./Pages/Material";
+import DutyDoctor from "./pages/DutyDoctor";
+import Lab from "./pages/Lab";
+import Material from "./pages/Material";
 import PrivateRoute from "./Routes/PrivateRouter";
-import Dash from "./Pages/Dash";
-import EditeDuty from "./Pages/Update/UpdateDuty";
-import PaymentEdit from "./Pages/Update/UpdateInvoice";
+import Dash from "./pages/Dash";
+import EditeDuty from "./pages/Update/UpdateDuty";
+import PaymentEdit from "./pages/Update/UpdateInvoice";
 function App() {
   useEffect(() => {
     Aos.init({
