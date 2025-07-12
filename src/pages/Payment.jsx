@@ -24,14 +24,14 @@ import {
 import { format } from "date-fns";
 import { ThemeContext } from "../Colors/Themes";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPatients } from "../Stores/patientSlice";
-import { fetchTreats } from "../Stores/treatSlice";
+import { fetchPatients } from "../stores/patientSlice";
+import { fetchTreats } from "../stores/treatSlice";
 import {
   createInvoicePatient,
   fetchInvoicePatients,
   deleteInvoicePatient,
-} from "../Stores/invoicePatientSlice";
-import { fetchPays } from "../Stores/paySlice";
+} from "../stores/invoicePatientSlice";
+import { fetchPays } from "../stores/paySlice";
 import { ToastContainer, toast } from "react-toastify";
 import { Doughnut, Line } from "react-chartjs-2";
 import {
@@ -46,7 +46,7 @@ import {
   Title,
 } from "chart.js";
 import dayjs from "dayjs";
-import { fetchDoctors } from "../Stores/doctorSlice";
+import { fetchDoctors } from "../stores/doctorSlice";
 
 // Register Chart.js components
 ChartJS.register(
