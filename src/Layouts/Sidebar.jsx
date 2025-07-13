@@ -250,25 +250,16 @@ const Sidebar = () => {
           <div className="flex items-center gap-4">
             <div className="text-right hidden md:block">
               <div className="text-sm font-semibold text-gray-700 dark:text-white">
-                John Doe
+                
               </div>
               <div className="text-xs text-gray-500 dark:text-gray-300">
-                {userRole === "admin" ? "Administrator" : "User"}
+                
               </div>
             </div>
             <div className="relative group">
-              <img
-                src="https://randomuser.me/api/portraits/men/32.jpg"
-                alt="Profile"
-                className="w-10 h-10 rounded-full border-2 border-blue-500 shadow cursor-pointer"
-              />
+              
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-20 hidden group-hover:block">
-                <Link
-                  to="/admin/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  Your Profile
-                </Link>
+                
                 <Link
                   to="/admin/settings"
                   className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
