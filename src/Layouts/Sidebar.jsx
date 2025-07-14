@@ -113,7 +113,7 @@ const Sidebar = () => {
   return (
     <div className={`flex h-screen font-sans ${isDark ? "dark" : ""}`}>
       {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-white-800 to-white-900 text-black p-4 overflow-y-auto flex flex-col shadow-xl">
+      <div className="w-64 bg-gradient-to-b from-white-800 to-white-900 text-black p-4 overflow-y-auto flex flex-col shadow-xl scrollbar-hide">
         {/* Logo Section */}
         <div className="flex flex-col items-center mb-8 pt-4">
           <div className="bg-white p-2 rounded-full shadow-lg mb-3">
