@@ -1053,13 +1053,13 @@ export default function PatientList() {
                     placeholder="35"
                     min="1"
                     max="120"
-                    required
+                    
                     className={`w-full p-2.5 rounded-lg border focus:ring-2 ${
                       isDark
                         ? "text-gray-100 bg-gray-700 border-gray-600 focus:ring-teal-500 focus:border-teal-500"
                         : "bg-white border-gray-300 focus:ring-teal-300 focus:border-teal-500"
                     } transition placeholder-gray-400`}
-                    aria-required="true"
+                    
                   />
                 </div>
 
