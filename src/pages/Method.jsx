@@ -117,16 +117,7 @@ const PaymentMethod = () => {
             }`}
           />
           <div className="flex gap-3">
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => {
-                setIsModalVisible(true);
-              }}
-              className="flex items-center"
-            >
-              <span className="hidden sm:inline">New Method</span>
-            </Button>
+           
             <Button
               icon={<ReloadOutlined />}
               onClick={() => fetchPaymentMethods({ pagination })}
@@ -290,22 +281,7 @@ const PaymentMethod = () => {
         </table>
       </div>
 
-      <Modal
-        title={editingId ? "Edit Payment Method" : "Create Payment Method"}
-        open={isModalVisible}
-        onCancel={() => {
-          setIsModalVisible(false);
-          resetForm();
-        }}
-        okText={editingId ? "Update" : "Create"}
-        confirmLoading={loading}
-        className={`${
-          isDark
-            ? "[&_.ant-modal-content]:bg-[#2c2c2c] [&_.ant-modal-content]:text-white"
-            : ""
-        } [&_.ant-modal-content]:rounded-lg`}
-      >
-        <form onSubmit={handleSave} className="space-y-4">
+       <form onSubmit={handleSave} className="space-y-4">
           <div className="flex flex-col">
             <label htmlFor="name" className="mb-1 font-medium">
               Method Name
@@ -327,14 +303,7 @@ const PaymentMethod = () => {
             />
           </div>
 
-          {editingId && (
-            <div className="flex items-center gap-2">
-              <label htmlFor="is_active" className="font-medium">
-                Status
-              </label>
-              <input type="checkbox" id="is_active" name="is_active" />
-            </div>
-          )}
+          
 
           <button
             type="submit"
@@ -343,7 +312,6 @@ const PaymentMethod = () => {
             Submit
           </button>
         </form>
-      </Modal>
     </div>
   );
 };
