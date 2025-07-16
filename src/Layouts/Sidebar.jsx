@@ -231,47 +231,13 @@ const Sidebar = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Navbar */}
-        <div className="bg-white dark:bg-gray-800 h-16 shadow-sm flex justify-between items-center px-6 z-10">
-          <div className="flex items-center gap-4">
-           
-            <div className="relative">
-              <button className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all">
-                <IoNotificationsOutline className="text-xl" />
-              </button>
-              <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-red-500"></span>
-            </div>
+      <div className="bg-white dark:bg-gray-800 h-16 shadow-sm flex justify-between items-center px-6 z-10">
+          <div className="flex items-center justify-center w-full h-full">
+            <h1 className="text-center text-3xl font-semibold text-blue-600 uppercase">
+              DENTAL SYSTEM HEALTH CARE
+            </h1>
           </div>
-
-          <div className="flex items-center gap-4">
-            <div className="text-right hidden md:block">
-              <div className="text-sm font-semibold text-gray-700 dark:text-white">
-                
-              </div>
-              <div className="text-xs text-gray-500 dark:text-gray-300">
-                
-              </div>
-            </div>
-            <div className="relative group">
-              
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-20 hidden group-hover:block">
-                
-                <Link
-                  to="/admin/settings"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  Settings
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                >
-                  Sign out
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
+      </div>
         {/* Content */}
         <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-auto p-6">
           <Outlet />
