@@ -10,7 +10,7 @@ export const loginUser = createAsyncThunk(
       const data = response.data;
 
       const token = data.token;
-      const roles = data.roles; 
+     
       
 
       if (!token || !Array.isArray(roles)) {
@@ -19,13 +19,12 @@ export const loginUser = createAsyncThunk(
 
       // ✅ Store in localStorage
       localStorage.setItem('token', token);
-      localStorage.setItem('roles', roles); 
       localStorage.setItem('company', credentials.company); 
      
       
       
 
-      return { token,  roles };
+      return { token };
     } catch (error) {
       console.error('Login error:', {
         message: error.message,
@@ -48,7 +47,6 @@ export const logoutUser = createAsyncThunk(
     try {
       await auth.logout();
       localStorage.removeItem('token');
-      localStorage.removeItem('roles');
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -63,7 +61,6 @@ const authSlice = createSlice({
   initialState: {
     user: null,
     token: localStorage.getItem('token'),
-    role: localStorage.getItem('roles'),
     loading: false,
     error: null,
     status: 'idle',
