@@ -17,7 +17,7 @@ const DutyDoctor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [printDuty, setPrintDuty] = useState(null);
-  const [currentPage, setCurrentPage] = useState(5);
+  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Number of items per page
 
   const [patientId, setPatient] = useState('');
