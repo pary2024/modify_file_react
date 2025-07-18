@@ -1,25 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createDuty, fetchDuty, fetchDutys } from '../stores/dutyDoctorSlice';
+import { createDuty, fetchDuty, fetchDutys } from '../Stores/dutyDoctorSlice';
 import { FaUserMd, FaUser, FaClinicMedical, FaPlus, FaSearch, FaCalendarAlt, FaTimes, FaTeeth, FaUserInjured, FaSave, FaPrint } from 'react-icons/fa';
 import { MdEdit, MdDelete } from 'react-icons/md';
-import { fetchTreats } from '../stores/treatSlice';
-import { fetchDoctors } from '../stores/doctorSlice';
-import { fetchPatients } from '../stores/patientSlice';
+import { fetchTreats } from '../Stores/treatSlice';
+import { fetchDoctors } from '../Stores/doctorSlice';
+import { fetchPatients } from '../Stores/patientSlice';
 import { ToastContainer, toast } from 'react-toastify';
+
 const DutyDoctor = () => {
   const dispatch = useDispatch();
   const { duties = [], loading, error } = useSelector((state) => state.duty || {});
-  
   const { treats } = useSelector((state) => state.treat || {});
   const { doctors } = useSelector((state) => state.doctor || {});
   const { patients } = useSelector((state) => state.patient || {});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEdit, setIsEdit] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [printDuty, setPrintDuty] = useState(null);
-  
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // Number of items per page
 
   const [patientId, setPatient] = useState('');
   const [doctorId, setDoctor] = useState('');
@@ -70,6 +69,16 @@ const DutyDoctor = () => {
     })
     : [];
 
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredDuties.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentDuties = filteredDuties.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
   const handlePrint = (duty) => {
     setPrintDuty(duty);
   };
@@ -77,7 +86,6 @@ const DutyDoctor = () => {
   const PrintTreatment = ({ duty, onClose }) => {
     if (!duty) return null;
 
-    // Renamed this to avoid conflict with the function below
     const PrintContentComponent = () => {
       return (
         <div className="p-6 max-w-md mx-auto bg-white">
@@ -131,287 +139,284 @@ const DutyDoctor = () => {
       );
     };
 
-  const handlePrint = () => {
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Please allow pop-ups for this site to print');
-    return;
-  }
+    const handlePrint = () => {
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        alert('Please allow pop-ups for this site to print');
+        return;
+      }
 
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Treatment Receipt - ${duty.patient?.name || 'Patient'}</title>
-        <style>
-          * {
-            box-sizing: border-box;
-            font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-          }
-          body {
-            margin: 0;
-            padding: 20px;
-            background: #f5f9ff;
-            color: #2d3748;
-          }
-          .receipt-container {
-            max-width: 700px;
-            margin: 20px auto;
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            position: relative;
-            overflow: hidden;
-          }
-          
-          /* Dental-themed watermark */
-          .receipt-container::after {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" opacity="0.03"><path d="M30 50 Q50 30 70 50 Q50 70 30 50 Z" fill="none" stroke="%233b82f6" stroke-width="1"/></svg>');
-            z-index: -1;
-          }
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Treatment Receipt - ${duty.patient?.name || 'Patient'}</title>
+            <style>
+              * {
+                box-sizing: border-box;
+                font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+              }
+              body {
+                margin: 0;
+                padding: 20px;
+                background: #f5f9ff;
+                color: #2d3748;
+              }
+              .receipt-container {
+                max-width: 700px;
+                margin: 20px auto;
+                background: white;
+                border-radius: 12px;
+                Išimkite: 30px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                position: relative;
+                overflow: hidden;
+              }
+              
+              .receipt-container::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100" opacity="0.03"><path d="M30 50 Q50 30 70 50 Q50 70 30 50 Z" fill="none" stroke="%233b82f6" stroke-width="1"/></svg>');
+                z-index: -1;
+              }
 
-          .clinic-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid rgba(59, 130, 246, 0.2);
-          }
-          .clinic-header h2 {
-            margin: 0;
-            font-size: 28px;
-            color: #1e40af;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-          }
-          .clinic-header p {
-            margin: 5px 0 0;
-            font-size: 15px;
-            color: #4b5563;
-          }
-          .clinic-contact {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-            font-size: 14px;
-            color: #6b7280;
-          }
+              .clinic-header {
+                text-align: center;
+                margin-bottom: 30px;
+                padding-bottom: 20px;
+                border-bottom: 2px solid rgba(59, 130, 246, 0.2);
+              }
+              .clinic-header h2 {
+                margin: 0;
+                font-size: 28px;
+                color: #1e40af;
+                font-weight: 700;
+                letter-spacing: -0.5px;
+              }
+              .clinic-header p {
+                margin: 5px 0 0;
+                font-size: 15px;
+                color: #4b5563;
+              }
+              .clinic-contact {
+                display: flex;
+                justify-content: center;
+                gap: 15px;
+                margin-top: 10px;
+                font-size: 14px;
+                color: #6b7280;
+              }
 
-          .section {
-            margin-bottom: 25px;
-          }
+              .section {
+                margin-bottom: 25px;
+              }
 
-          .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e40af;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 2px solid #ebf2ff;
-            display: flex;
-            align-items: center;
-          }
-          .section-title::before {
-            content: "";
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background: #3b82f6;
-            border-radius: 50%;
-            margin-right: 10px;
-          }
+              .section-title {
+                font-size: 18px;
+                font-weight: 600;
+                color: #1e40af;
+                margin-bottom: 15px;
+                padding-bottom: 5px;
+                border-bottom: 2px solid #ebf2ff;
+                display: flex;
+                align-items: center;
+              }
+              .section-title::before {
+                content: "";
+                display: inline-block;
+                width: 8px;
+                height: 8px;
+                background: #3b82f6;
+                border-radius: 50%;
+                margin-right: 10px;
+              }
 
-          .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 15px;
-          }
-          .info-row.highlight {
-            background: #f0f7ff;
-            padding: 8px 12px;
-            border-radius: 6px;
-            margin: 15px -12px;
-          }
+              .info-row {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 10px;
+                font-size: 15px;
+              }
+              .info-row.highlight {
+                background: #f0f7ff;
+                padding: 8px 12px;
+                border-radius: 6px;
+                margin: 15px -12px;
+              }
 
-          .label {
-            font-weight: 600;
-            color: #374151;
-            min-width: 120px;
-          }
-          .value {
-            color: #4b5563;
-            text-align: right;
-          }
-          .value.important {
-            color: #1e40af;
-            font-weight: 600;
-          }
+              .label {
+                font-weight: 600;
+                color: #374151;
+                min-width: 120px;
+              }
+              .value {
+                color: #4b5563;
+                text-align: right;
+              }
+              .value.important {
+                color: #1e40af;
+                font-weight: 600;
+              }
 
-          .treatment-details {
-            background: #f8fafc;
-            border-radius: 8px;
-            padding: 15px;
-            font-size: 15px;
-            color: #374151;
-            white-space: pre-line;
-            line-height: 1.6;
-            border-left: 4px solid #3b82f6;
-          }
+              .treatment-details {
+                background: #f8fafc;
+                border-radius: 8px;
+                padding: 15px;
+                font-size: 15px;
+                color: #374151;
+                white-space: pre-line;
+                line-height: 1.6;
+                border-left: 4px solid #3b82f6;
+              }
 
-          .footer {
-            text-align: center;
-            margin-top: 40px;
-            font-size: 14px;
-            color: #6b7280;
-          }
-          .footer-note {
-            background: #f0fdf4;
-            color: #166534;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 20px 0;
-            border: 1px solid #bbf7d0;
-            font-size: 14px;
-          }
-          .signature-area {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 50px;
-          }
-          .signature {
-            text-align: center;
-            width: 45%;
-          }
-          .signature-line {
-            height: 1px;
-            background: #cbd5e0;
-            margin: 40px auto 10px;
-            width: 80%;
-          }
+              .footer {
+                text-align: center;
+                margin-top: 40px;
+                font-size: 14px;
+                color: #6b7280;
+              }
+              .footer-note {
+                background: #f0fdf4;
+                color: #166534;
+                padding: 12px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border: 1px solid #bbf7d0;
+                font-size: 14px;
+              }
+              .signature-area {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 50px;
+              }
+              .signature {
+                text-align: center;
+                width: 45%;
+              }
+              .signature-line {
+                height: 1px;
+                background: #cbd5e0;
+                margin: 40px auto 10px;
+                width: 80%;
+              }
 
-          @media print {
-            body {
-              background: white;
-              padding: 0;
-            }
-            .receipt-container {
-              box-shadow: none;
-              border-radius: 0;
-              padding: 20px;
-            }
-            .no-print {
-              display: none;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="receipt-container">
-          <div class="clinic-header">
-            <h2>BrightSmile Dental Clinic</h2>
-            <p>Specialized Dental Care & Cosmetic Dentistry</p>
-            <div class="clinic-contact">
-              <span>123 Health Street, Dental City</span>
-              <span>Phone: (123) 456-7890</span>
+              @media print {
+                body {
+                  background: white;
+                  padding: 0;
+                }
+                .receipt-container {
+                  box-shadow: none;
+                  border-radius: 0;
+                  padding: 20px;
+                }
+                .no-print {
+                  display: none;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="receipt-container">
+              <div class="clinic-header">
+                <h2>BrightSmile Dental Clinic</h2>
+                <p>Specialized Dental Care & Cosmetic Dentistry</p>
+                <div class="clinic-contact">
+                  <span>123 Health Street, Dental City</span>
+                  <span>Phone: (123) 456-7890</span>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Treatment Receipt</div>
+                <div class="info-row">
+                  <div class="label">Receipt Date:</div>
+                  <div class="value important">${new Date().toLocaleDateString()}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Receipt No:</div>
+                  <div class="value important">#${duty.id || '0000'}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">លេខធ្មេញ:</div>
+                  <div class="value important">..............</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Patient Information</div>
+                <div class="info-row highlight">
+                  <div class="label">Patient Name:</div>
+                  <div class="value important">${duty.patient?.name || 'Unknown'}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Treatment Information</div>
+                <div class="info-row">
+                  <div class="label">Dentist:</div>
+                  <div class="value important">Dr. ${duty.doctor?.name || 'Unknown'}</div>
+                </div>
+                <div class="info-row">
+                  <div class="label">Treatment Date:</div>
+                  <div class="value">${new Date(duty.created_at).toLocaleDateString()}</div>
+                </div>
+              </div>
+
+              <div class="section">
+                <div class="section-title">Treatment Details</div>
+                <div class="treatment-details">
+                  ${duty.note || 'No treatment details provided'}
+                </div>
+              </div>
+
+              <div class="footer-note">
+                <strong>Next Appointment:</strong> Please schedule your follow-up visit for complete care
+              </div>
+
+              <div class="footer">
+                ចំណាំ! ត្រូវមកតាមការណាត់ជូប: ថ្ងៃទី.......ខែ......ឆ្នាំ.......។<br>
+                វេលាម៉ោង:..............។
+              </div>
+
+              <div class="signature-area">
+                <div class="signature">
+                  <div class="signature-line"></div>
+                  <p>Patient's Signature</p>
+                </div>
+                <div class="signature">
+                  <div class="signature-line"></div>
+                  <p>Dentist's Signature</p>
+                </div>
+              </div>
+
+              <div class="footer">
+                Thank you for choosing BrightSmile Dental Clinic<br>
+                For emergencies: (123) 456-7890 (24/7)
+              </div>
             </div>
-          </div>
 
-          <div class="section">
-            <div class="section-title">Treatment Receipt</div>
-            <div class="info-row">
-              <div class="label">Receipt Date:</div>
-              <div class="value important">${new Date().toLocaleDateString()}</div>
-            </div>
-            <div class="info-row">
-              <div class="label">Receipt No:</div>
-              <div class="value important">#${duty.id || '0000'}</div>
-            </div>
-            <div class="info-row">
-              <div class="label">លេខធ្មេញ:</div>
-              <div class="value important">..............</div>
-            </div>
-          </div>
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                  setTimeout(function() {
+                    window.close();
+                  }, 300);
+                }, 500);
+              };
+            </script>
+          </body>
+        </html>
+      `;
 
-          <div class="section">
-            <div class="section-title">Patient Information</div>
-            <div class="info-row highlight">
-              <div class="label">Patient Name:</div>
-              <div class="value important">${duty.patient?.name || 'Unknown'}</div>
-            </div>
-           
-          </div>
-
-          <div class="section">
-            <div class="section-title">Treatment Information</div>
-            <div class="info-row">
-              <div class="label">Dentist:</div>
-              <div class="value important">Dr. ${duty.doctor?.name || 'Unknown'}</div>
-            </div>
-            <div class="info-row">
-              <div class="label">Treatment Date:</div>
-              <div class="value">${new Date(duty.created_at).toLocaleDateString()}</div>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Treatment Details</div>
-            <div class="treatment-details">
-              ${duty.note || 'No treatment details provided'}
-            </div>
-          </div>
-
-          <div class="footer-note">
-            <strong>Next Appointment:</strong> Please schedule your follow-up visit for complete care
-          </div>
-
-          <div class="footer">
-            ចំណាំ! ត្រូវមកតាមការណាត់ជូប: ថ្ងៃទី.......ខែ......ឆ្នាំ.......។<br>
-            វេលាម៉ោង:..............។
-          </div>
-
-          <div class="signature-area">
-            <div class="signature">
-              <div class="signature-line"></div>
-              <p>Patient's Signature</p>
-            </div>
-            <div class="signature">
-              <div class="signature-line"></div>
-              <p>Dentist's Signature</p>
-            </div>
-          </div>
-
-          <div class="footer">
-            Thank you for choosing BrightSmile Dental Clinic<br>
-            For emergencies: (123) 456-7890 (24/7)
-          </div>
-        </div>
-
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-              setTimeout(function() {
-                window.close();
-              }, 300);
-            }, 500);
-          };
-        </script>
-      </body>
-    </html>
-  `;
-
-  printWindow.document.write(htmlContent);
-  printWindow.document.close();
-};
-
+      printWindow.document.write(htmlContent);
+      printWindow.document.close();
+    };
 
     return (
       <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4">
@@ -454,8 +459,6 @@ const DutyDoctor = () => {
     return (
       <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
         <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100">
-
-          {/* Header */}
           <div className="flex justify-between items-center border-b border-teal-100 p-5 bg-gradient-to-r from-teal-50 to-blue-50 rounded-t-xl">
             <h3 className="text-xl font-semibold text-teal-800">
               <FaTeeth className="inline mr-2" />
@@ -469,10 +472,8 @@ const DutyDoctor = () => {
             </button>
           </div>
 
-          {/* Form Body */}
           <form onSubmit={handleSave}>
             <div className="p-5 space-y-5">
-              {/* Doctor Select */}
               <div className="relative">
                 <label className="block text-sm font-medium text-teal-700 mb-1 ml-1">Dentist</label>
                 <div className="relative">
@@ -491,7 +492,6 @@ const DutyDoctor = () => {
                 </div>
               </div>
 
-              {/* Patient Select */}
               <div className="relative">
                 <label className="block text-sm font-medium text-teal-700 mb-1 ml-1">Patient</label>
                 <div className="relative">
@@ -510,7 +510,6 @@ const DutyDoctor = () => {
                 </div>
               </div>
 
-              {/* Treatment Select */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">
                   Treatments (select or type) <span className="text-red-500">*</span>
@@ -549,7 +548,6 @@ const DutyDoctor = () => {
                 </select>
               </div>
 
-              {/* Note / Description */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea
@@ -562,7 +560,6 @@ const DutyDoctor = () => {
                 />
               </div>
 
-              {/* Status */}
               <div>
                 <label className="block text-sm font-medium text-teal-700 mb-1 ml-1">Status</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -595,7 +592,6 @@ const DutyDoctor = () => {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="flex justify-end space-x-3 p-5 border-t border-teal-100 bg-gray-50 rounded-b-xl">
               <button
                 type="button"
@@ -622,7 +618,6 @@ const DutyDoctor = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="mx-auto">
         <ToastContainer position="top-center" autoClose={3000} />
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Duty Doctor Schedule</h1>
@@ -637,7 +632,6 @@ const DutyDoctor = () => {
           </button>
         </div>
 
-        {/* Search and Filter Section */}
         <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="relative flex-grow">
@@ -650,11 +644,9 @@ const DutyDoctor = () => {
                 className="pl-10 pr-4 py-2 w-[500px] border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
               />
             </div>
-            
           </div>
         </div>
 
-        {/* Status Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
             <h3 className="text-gray-500 font-medium">Total Duties</h3>
@@ -674,14 +666,12 @@ const DutyDoctor = () => {
           </div>
         </div>
 
-        {/* Loading State */}
         {loading && (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         )}
 
-        {/* Error State */}
         {error && (
           <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
             <div className="flex">
@@ -700,7 +690,6 @@ const DutyDoctor = () => {
           </div>
         )}
 
-        {/* Empty State */}
         {!loading && filteredDuties.length === 0 && (
           <div className="bg-white rounded-lg shadow-sm p-8 text-center">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -722,7 +711,6 @@ const DutyDoctor = () => {
           </div>
         )}
 
-        {/* Data Table */}
         {!loading && filteredDuties.length > 0 && (
           <div className="bg-white shadow-sm rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
@@ -750,12 +738,11 @@ const DutyDoctor = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredDuties.map((duty, index) => (
+                  {currentDuties.map((duty, index) => (
                     <tr key={duty.id || index} className="hover:bg-gray-50 transition">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {index + 1}
+                        {indexOfFirstItem + index + 1}
                       </td>
-
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex items-center">
                           <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -771,15 +758,12 @@ const DutyDoctor = () => {
                           </div>
                         </div>
                       </td>
-
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {duty.patient_id ? duty.patient?.name || 'Unknown' : '-'}
                       </td>
-
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {duty.note ? `${duty.note}` : '-'}
                       </td>
-
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
                           ${duty.status === 'inprogress' ? 'bg-green-100 text-green-800' : 
@@ -788,7 +772,6 @@ const DutyDoctor = () => {
                           {duty.status || 'unknown'}
                         </span>
                       </td>
-
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         {duty.status === 'complete' && (
                           <button 
@@ -799,11 +782,9 @@ const DutyDoctor = () => {
                             <FaPrint className="inline" />
                           </button>
                         )}
-                      <a href={`/admin/edite/duty/${duty.id}`} className='text-blue-600 hover:text-blue-900 mr-3'>
-                            <MdEdit className="inline" />
-                          </a>
-
-
+                        <a href={`/admin/edite/duty/${duty.id}`} className='text-blue-600 hover:text-blue-900 mr-3'>
+                          <MdEdit className="inline" />
+                        </a>
                         <button className="text-red-600 hover:text-red-900">
                           <MdDelete className="inline" />
                         </button>
@@ -813,23 +794,64 @@ const DutyDoctor = () => {
                 </tbody>
               </table>
             </div>
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 bg-gray-50 border-t">
+                <div className="text-sm text-gray-700">
+                  Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredDuties.length)} of {filteredDuties.length} entries
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium transition-colors duration-200 ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    Previous
+                  </button>
+                  <div className="flex space-x-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button
+                        key={page}
+                        onClick={() => handlePageChange(page)}
+                        className={`px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium transition-colors duration-200 ${
+                          currentPage === page
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-white text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-1.5 rounded-lg border border-gray-300 text-sm font-medium transition-colors duration-200 ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-white text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+        <CreateDutyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        {printDuty && (
+          <PrintTreatment 
+            duty={printDuty} 
+            onClose={() => setPrintDuty(null)} 
+          />
+        )}
       </div>
-
-      {/* Create Duty Modal */}
-      <CreateDutyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      {/* <EditeDutyModal isOpen={isEdit} onClose={() => setIsEdit(false)} id={selectedId} /> */}
-
-     
-      
-      {/* Print Treatment Modal */}
-      {printDuty && (
-        <PrintTreatment 
-          duty={printDuty} 
-          onClose={() => setPrintDuty(null)} 
-        />
-      )}
     </div>
   );
 };
