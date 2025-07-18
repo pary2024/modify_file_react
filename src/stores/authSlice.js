@@ -13,8 +13,8 @@ export const loginUser = createAsyncThunk(
      
       
 
-      if (!token || !Array.isArray(roles)) {
-        throw new Error('Invalid login response: token or roles missing');
+      if (!token) {
+        throw new Error('Invalid login response: token  missing');
       }
 
       // ✅ Store in localStorage
