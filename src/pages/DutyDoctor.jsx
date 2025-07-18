@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createDuty, fetchDuty, fetchDutys } from '../Stores/dutyDoctorSlice';
+import { createDuty, fetchDuty, fetchDutys } from '../stores/dutyDoctorSlice';
 import { FaUserMd, FaUser, FaClinicMedical, FaPlus, FaSearch, FaCalendarAlt, FaTimes, FaTeeth, FaUserInjured, FaSave, FaPrint } from 'react-icons/fa';
 import { MdEdit, MdDelete } from 'react-icons/md';
-import { fetchTreats } from '../Stores/treatSlice';
-import { fetchDoctors } from '../Stores/doctorSlice';
-import { fetchPatients } from '../Stores/patientSlice';
+import { fetchTreats } from '../stores/treatSlice';
+import { fetchDoctors } from '../stores/doctorSlice';
+import { fetchPatients } from '../stores/patientSlice';
 import { ToastContainer, toast } from 'react-toastify';
 
 const DutyDoctor = () => {
@@ -17,7 +17,7 @@ const DutyDoctor = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [printDuty, setPrintDuty] = useState(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(5);
   const [itemsPerPage] = useState(10); // Number of items per page
 
   const [patientId, setPatient] = useState('');
