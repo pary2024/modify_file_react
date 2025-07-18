@@ -47,6 +47,11 @@ const DutyDoctor = () => {
       dispatch(fetchDutys());
       toast.success('Duty created successfully!', { position: "top-right" });
       setIsModalOpen(false);
+      setPatient("")
+      setDoctor("")
+      setTreat("")
+      setStatus("")
+      setNote("")
     } catch (e) {
       toast.error(`Error creating duty: ${e.message}`, { position: "top-right" });
     }
