@@ -68,12 +68,13 @@ import { ToastContainer, toast } from "react-toastify";
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50 p-4 transition-opacity duration-300">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto transform transition-all duration-300 scale-100">
+         
+        {/* Header */}
+        <div className="flex justify-between items-center border-b border-teal-100 p-5 bg-gradient-to-r from-teal-50 to-blue-50 rounded-t-xl">
           <ToastContainer
                 position="top-center"
                 autoClose={3000}   
           />
-        {/* Header */}
-        <div className="flex justify-between items-center border-b border-teal-100 p-5 bg-gradient-to-r from-teal-50 to-blue-50 rounded-t-xl">
           <h3 className="text-xl font-semibold text-teal-800">
             <FaTeeth className="inline mr-2"/>
             Update Dental Duty Assignment
