@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Laravel API base URL
 const api = axios.create({
-  baseURL: 'https://hostinglaravelimage-master-z2wetq.laravel.cloud/api', 
+  baseURL: 'https://dentalhealth-master-9atevb.laravel.cloud/api', 
   headers: {
     'Content-Type': 'application/json',
     'Content-Type': 'multipart/form-data'
