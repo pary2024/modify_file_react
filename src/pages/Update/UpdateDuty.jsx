@@ -71,10 +71,7 @@ import { ToastContainer, toast } from "react-toastify";
          
         {/* Header */}
         <div className="flex justify-between items-center border-b border-teal-100 p-5 bg-gradient-to-r from-teal-50 to-blue-50 rounded-t-xl">
-          <ToastContainer
-                position="top-center"
-                autoClose={3000}   
-          />
+         
           <h3 className="text-xl font-semibold text-teal-800">
             <FaTeeth className="inline mr-2"/>
             Update Dental Duty Assignment
